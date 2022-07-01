@@ -79,7 +79,7 @@ peatonesADT newPeatones(void);
 /*
  * Libera el TAD
  */
-void freePeatones(peatonesADT pea);
+void freePeatones(peatonesADT peat);
 /*
  * Agrega un sensor y devuelve un 1 si lo creó y un 0 si ya existe.
  */
