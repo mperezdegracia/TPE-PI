@@ -104,6 +104,81 @@ int sensorExists(peatonesADT pea, int id){
     return (pea->sensorsSize > id-1 && pea->sensorsVec[id-1]!=NULL);
 }//TESTED
 
+//si todavia no habia mediciones de ese anio, agrega un nodo a la lista
+static TYearList addYear(TYearList list, int year){
+    if (list==NULL || list->year > year){
+        TYearList aux = malloc(sizeof(TNodeYear));
+        aux->year = year;
+        aux->yearCount = 0;
+        aux->tail = list;
+        return aux;
+    }
+    if (list->year < year){
+        list->tail = addYear(list->tail, year);
+    }
+    return list;
+}
+
+static int monthToNum(char*month){
+    if (strcmp(month, "January")==0) return 1;
+    if (strcmp(month, "February")==0) return 2;
+    if (strcmp(month, "March")==0) return 3;
+    if (strcmp(month, "April")==0) return 4;
+    if (strcmp(month, "May")==0) return 5;
+    if (strcmp(month, "June")==0) return 6;
+    if (strcmp(month, "July")==0) return 7;
+    if (strcmp(month, "August")==0) return 8;
+    if (strcmp(month, "September")==0) return 9;
+    if (strcmp(month, "October")==0) return 10;
+    if (strcmp(month, "November")==0) return 11;
+    return 12;
+}
+
+static int weekDayToNum (char*day){
+    if (strcmp(day, "Monday")==0) return 0;
+    if (strcmp(day, "Tuesday")==0) return 1;
+    if (strcmp(day, "Wednesday")==0) return 2;
+    if (strcmp(day, "Thursday")==0) return 3;
+    if (strcmp(day, "Friday")==0) return 4;
+    if (strcmp(day, "Saturday")==0) return 5;
+    if (strcmp(day, "Sunday")==0) return 6;
+}
+
+//el vector FromTo tiene en el indice 0 desde que anio y en el indice 1 hasta que anio se debe considerar para el maxCount,
+//y 0 si no se especifico un rango o un hasta(ambos espacios son 0 o FromTo[1]==0, respectivamente)
+int addReading(peatonesADT pea, int year, char * month, int mDate, char * day, int sensorId, int time, int counts, int FromTo[2]){
+    TSensor * sensor = pea->sensorsVec[sensorId-1];
+    if (pea->sensorsSize < sensorId||sensor==NULL) return 0;
+    sensor->sensorCounts += counts;
+    //si esta entre los anios del rango provisto y counts es mayor que el counts que habia en maxCounts, lo modifica
+    if (FromTo[0]==0 ||((year>=FromTo[0] && (year<=FromTo[1]))||FromTo[1]==0)){
+        if (sensor->maxCount->counts < counts){
+            sensor->maxCount->dateFormatted[DAY]=mDate;
+            sensor->maxCount->dateFormatted[MONTH]= monthToNum(month);
+            sensor->maxCount->dateFormatted[YEAR]=year;
+            sensor->maxCount->dateFormatted[HOUR]=time;
+        }
+    }
+    pea->sensorsVec[sensorId-1]=sensor; //paso al ADT lo que modifique
+
+    toBeginYear(pea);
+    while (hasNextYear(pea)&&pea->next->year < year){
+        pea->next = pea->next->tail;
+    }
+    if (pea->next->year > year){
+        pea->next = addYear(pea->next, year);
+    }
+    pea->next->yearCount += counts;
+
+    int weekDay = weekDayToNum(day);
+    if (time >= 6 && time < 18){
+        pea->dayVec[weekDay].daylightCount += counts;
+    } else
+        pea->dayVec[weekDay].nightCount += counts;
+
+    return 1;
+}
+
 char* getNameById(peatonesADT pea, int sensorID){
     if(  !sensorExists(pea, sensorID) ) return NULL;
     return pea->sensorsVec[sensorID-1]->name;
@@ -153,7 +228,8 @@ static compareInt(int num1, int num2){
   return num1 - num2;
 }
 
-static int getYearRec(TYearList list, int year){
+/*
+ static int getYearRec(TYearList list, int year){
     if(list==NULL || compareInt(list->year, year) < 0) return -1;
     if(list->year == year){
         return year;
@@ -163,7 +239,10 @@ static int getYearRec(TYearList list, int year){
 
 long int getYearCount(peatonesADT pea, int year){
     return getYearRec(pea->first, year);
-} //NEEDS addReading BEFORE TESTING
+
+}
+*/
+
 
 void toBeginYear(peatonesADT pea){
     pea->next = pea->first;
