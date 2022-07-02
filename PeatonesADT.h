@@ -71,67 +71,48 @@ typedef struct peatonesCDT* peatonesADT;
 typedef enum dateType { HOUR=0, DAY, MONTH, YEAR, DATE_FIELDS } dateType;
 typedef enum daysType { MONDAY=0, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY, CANT_DAYS } daysType;
 
-
-/*
+/* peatonesADT newPeatones()
  * Crea y devuelve un TAD vacío
  */
 peatonesADT newPeatones(void);
-/*
+
+/*void freePeatones(
  * Libera el TAD
  */
 void freePeatones(peatonesADT peat);
-/*
+
+/* int putSensor()
  * Agrega un sensor y devuelve un 1 si lo creó y un 0 si ya existe.
  */
+int putSensor(peatonesADT pea, int id, char * name);
 
-
-/*
- * arranca el programa main
- * crea tad vacio
- * abrir archivo de sensores
- * carga todos los sensores activos
- * abro el archivo de mediciones
- * addReading a todos las mediciones
- *
- *
- *
- *
- *
- *
- *
- * */
-int putSensor(peatonesADT pea, int id, char * name);    // puse put xq uso vectores
-/*
+/* int addReading()
  * incrementa los respectivos counts, si la medición es máxima, entonces actualizo el maxCount del respectivo sensor
  */
 int addReading(peatonesADT pea, int year, char * month, int mDate, char * day, int sensorId, int time, int counts);   // puse add xq uso listas
 
-
-/*
- * devuelve 1 si el sensor está en la lista de sensores activos y 0 de lo contrario
+/* int sensorExists()
+ * Devuelve 1 si el sensor está en la lista de sensores activos y 0 de lo contrario
  */
 int sensorExists(peatonesADT pea, int id);
 
-
-//QUERY 1
-/*
- * devuelve la cantidad de peatones que leyó un sensor
+/* long int getSensorCount()
+ * Devuelve la cantidad de peatones que leyó un sensor
  */
 long int getSensorCount(peatonesADT pea, int sensorID);
-/*
- * devuelve el nombre del sensor
+
+/* char* getNameById()
+ * Devuelve el nombre del sensor
  */
 char* getNameById(peatonesADT pea, int sensorID);
 
-
-/*
- * devuelve un vector con los ID de los sensores activos y la dimension de ese vector en un parametro de salida
+/* int * getSensorIDs()
+ * Devuelve un vector con los ID de los sensores activos y la dimension de ese vector en un parametro de salida
  * los IDs despues necesitan para pasarle el parametro a getSensorCount
  */
 int * getSensorIDs(peatonesADT pea, int * dim);
 
-//QUERIES 2
-/*
+/* void toBeginYear()
  * devuelve la cantidad de peatones de un determinado año.
  */
 long int getYearCount(peatonesADT pea, int year);
@@ -141,33 +122,26 @@ long int getYearCount(peatonesADT pea, int year);
  */
 void toBeginYear(peatonesADT pea);
 
-/*
- * obtiene el siguiente año en la lista
+/* void nextYear()
+ * Obtiene el siguiente año en la lista
  */
-int nextYear(peatonesADT pea);
+void nextYear(peatonesADT pea, long int * yearCount, int * year);
 
-/*
- * determina si hay un siguiente año en la lista
- * devuelve 0 si se llegó al final de la misma y 1 en el caso contrario
+/* int hasNextYear()
+ * Determina si hay un siguiente año en la lista
+ * Devuelve 0 si se llegó al final de la misma y 1 en el caso contrario
  */
 int hasNextYear(peatonesADT pea);
 
-//QUERIES 3
-/*
- *  devuelve la cantidad de peatones en horario diurno/nocturno del día especificado
- *  se pasa un BOOL donde 0 es para daylight y 1 es para night
+/* long int getDailyCount()
+ *      Devuelve la cantidad de peatones en horario diurno/nocturno del día especificado, se pasa un BOOL donde 0 es para daylight y 1 es para night
  */
 long int getDailyCount(peatonesADT pea, char day, char option);
 
-
-//QUERIES 4
-
-/*
+/* getMaxReadingById()
  * Devuelve 1 si tuvo éxito o 0 si hubo error. deja los campos en los parámetros de salida de un sensor con SensorId=id
- *
  */
 int getMaxReadingById(peatonesADT pea, int id, int * maxCount, char ** name, int date[DATE_FIELDS]); // hay que formatear el date
-
 
 //getDateFormatted
 #endif //TPE_PEATONESADT_H
