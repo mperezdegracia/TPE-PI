@@ -138,6 +138,54 @@ int * getSensorIDs(peatonesADT pea, int * dim){
 
 
 
+long int getDailyCount(peatonesADT pea, char day, char option){
+    if (option){
+        return pea->dayVec[(int)day].nightCount;
+    }
+    else
+        return pea->dayVec[(int)day].daylightCount;
+}
+
+int * getSensorIDs(peatonesADT pea, int * dim){
+    int i, j;
+    int * sensorIDs = NULL;
+    errno = 0;
+
+    for ( i = 0, j = 0; i <= pea->sensorsSize; i++){
+        if (j % BLOCK){
+            sensorIDs = realloc(sensorIDs, (j+ BLOCK) * sizeof(int));
+            if(sensorIDs == NULL || errno != 0 ){
+                printf("Error: %s\n", strerror(errno));
+            }
+        }
+        if (pea->sensorsVec[i] != NULL){
+            sensorIDs[j++] = i+1;
+        }
+    }
+    *dim = j;
+    return sensorIDs;
+}
+
+int hasNextYear(peatonesADT pea){
+    return pea->next != NULL;
+}
+static compareInt(int num1, num2){
+  return num1 - num2;
+}
+
+static int getYearRec(TYearList list, int year){
+    if(list==NULL || compareInt(list->year, year) < 0) return -1;
+    if(list->year == year){
+        return year;
+    }
+    return getYearRec(list->next, year);
+}
+long int getYearCount(peatonesADT pea, int year){
+    return getYearRec(pea->first, year);
+}
+
+
+
 
 
 
