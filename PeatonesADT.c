@@ -6,6 +6,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <errno.h>
+
+#define BLOCK 10
 #define DAY_MAX_LETTERS 10
 #define MAX_DATE 20
 #define MAX_NAME 25
@@ -101,6 +104,38 @@ char* getNameById(peatonesADT pea, int sensorID){
     if(  !sensorExists(pea, sensorID) ) return NULL;
     return pea->sensorsVec[sensorID-1]->name;
 }
+
+long int getDailyCount(peatonesADT pea, char day, char option){
+    //partiendo de que los parametros day y option son válidos se devuelve el campo que almacena los resultados totales de peatones por día y según el horario
+    if (option){
+        return pea->dayVec[(int)day].nightCount;
+    }
+    else
+        return pea->dayVec[(int)day].daylightCount;
+}
+
+int * getSensorIDs(peatonesADT pea, int * dim){
+    int i, j;
+    int * sensorIDs = NULL;
+    errno = 0;
+
+    for ( i = 0, j = 0; i < pea->sensorsSize; i++){
+        //voy reservando espacios en el vector de rta usando bloques porque pueden quedar IDs no usadas en el vector de sensores
+        if (j % BLOCK == 0){
+            sensorIDs = realloc(sensorIDs, (j+ BLOCK) * sizeof(int));
+            if(sensorIDs == NULL || errno != 0 ){
+                printf("Error: %s\n", strerror(errno));
+            }
+        }
+        //si hay un sensor en la posición que estoy revisando quiero quedarme con el id
+        if (pea->sensorsVec[i] != NULL){
+            sensorIDs[j++] = i+1;//se hace el fixeo basandose en que el valor de los ids está "corrido" un lugar respecto de los indices del vec (id=1 -> pos=0)
+        }
+    }
+    *dim = j;
+    return sensorIDs;
+}
+
 
 
 
