@@ -10,27 +10,22 @@
 #include <assert.h>
 
 #define BLOCK 10
-#define DAY_MAX_LETTERS 10
-#define MAX_DATE 20
-#define MAX_NAME 25
 
 typedef struct reading {
-
     //char * month ;    no se usan
     //int mDate;
-    int year;
-    int dateFormatted[DATE_FIELDS];  // el main tiene que pasar la feche formateada
+    //int year;     ya esta en dateFormatted
+    int dateFormatted[DATE_FIELDS];  // vector de dim 4 con el dia, mes, anio y hora
     //char day[DAY_MAX_LETTERS];
     //int sensorId;
-    int time;      //  [0,23]T
+    //int time;      ya esta en dateFormatted
     int counts;
 } TReading;
 
 typedef struct sensor{
     int id;
     char * name;
-    //char status;
-    TReading * maxCount;
+    TReading maxCount;
     long int sensorCounts;
 } TSensor;
 
@@ -50,7 +45,7 @@ typedef TNodeYear * TYearList;
 
 typedef struct peatonesCDT {
     size_t sensorsSize;
-    TSensor ** sensorsVec;  // vector dinámico de punteros TSensor
+    TSensor * sensorsVec;  // vector dinámico de estructuras TSensor, cada sensor (con cierto Id) esta en el indice [sensor Id-1]
     TYearList first;  // list
     TYearList next;  // list
     TDay dayVec[CANT_DAYS];
@@ -66,42 +61,38 @@ static void freeRecList(TYearList list){
     free(list);
 }//TESTED
 
-static void freeVec(TSensor ** sensors, size_t dim){
+static void freeName(TSensor * sensors, size_t dim){
     for(int i=0; i<dim; i++){
-        free(sensors[i]->name);
-        free(sensors[i]->maxCount);
-        free(sensors[i]);
+        free(sensors[i].name);
     }
     free(sensors);
 }//TESTED
 
 void freePeatones(peatonesADT pea){
     freeRecList(pea->first);
-    freeVec(pea->sensorsVec, pea->sensorsSize);
+    freeName(pea->sensorsVec, pea->sensorsSize);
     free(pea);
 }//TESTED
 
-int putSensor(peatonesADT pea, int id, char * name){
+void putSensor(peatonesADT pea, int id, char * name){
     if(id > pea->sensorsSize){
         // si no tengo espacio en el vector, agrando sensorVec.
         pea->sensorsVec = realloc(pea->sensorsVec, id * sizeof(pea->sensorsVec[0]));
-        for(int i=pea->sensorsSize; i < id; i++){
-            pea->sensorsVec[i]= NULL;
-        }
+        for(int i = pea->sensorsSize; i < id; i++)
+            pea->sensorsVec[i].id = -1;
         pea->sensorsSize = id;
     }
-    TSensor * sensor= malloc(sizeof(*sensor));
-    sensor->id = id;
-    sensor->sensorCounts=0;
-    sensor->name = malloc(strlen(name) + 1); //hacer funcion copy auxiliar
-    strcpy(sensor->name, name);
-    sensor->maxCount = calloc(1, sizeof(*(sensor->maxCount)));
+    TSensor sensor;
+    sensor.id = id;
+    //sensor.sensorCounts ya esta en 0
+    sensor.name = malloc(strlen(name) + 1); //hacer funcion copy auxiliar
+    strcpy(sensor.name, name);
+    //sensor.maxCount.counts ya esta en 0
     pea->sensorsVec[id-1]=sensor;
-    return 1;  // podría ser void esta funcion, xq
 }//TESTED
 
 int sensorExists(peatonesADT pea, int id){
-    return (pea->sensorsSize > id-1 && pea->sensorsVec[id-1]!=NULL);
+    return (pea->sensorsSize > id-1 && pea->sensorsVec[id-1].id!=-1);
 }//TESTED
 
 //si todavia no habia mediciones de ese anio, agrega un nodo a la lista
@@ -131,6 +122,7 @@ static int monthToNum(char*month){
     if (strcmp(month, "September")==0) return 9;
     if (strcmp(month, "October")==0) return 10;
     if (strcmp(month, "November")==0) return 11;
+    //si es December
     return 12;
 }
 
@@ -141,28 +133,29 @@ static int weekDayToNum (char*day){
     if (strcmp(day, "Thursday")==0) return 3;
     if (strcmp(day, "Friday")==0) return 4;
     if (strcmp(day, "Saturday")==0) return 5;
-    if (strcmp(day, "Sunday")==0) return 6;
+    //si es Sunday
+    return 6;
 }
 
 //el vector FromTo tiene en el indice 0 desde que anio y en el indice 1 hasta que anio se debe considerar para el maxCount,
 //y 0 si no se especifico un rango o un hasta(ambos espacios son 0 o FromTo[1]==0, respectivamente)
-int addReading(peatonesADT pea, int year, char * month, int mDate, char * day, int sensorId, int time, int counts, int FromTo[2]){
-    TSensor * sensor = pea->sensorsVec[sensorId-1];
-    if (pea->sensorsSize < sensorId||sensor==NULL) return 0;
-    sensor->sensorCounts += counts;
+int addReading(peatonesADT pea, int year, char * month, int mDate, char * day, int sensorId, int time, int counts, const int FromTo[2]){
+    TSensor sensor = pea->sensorsVec[sensorId-1];
+    if (pea->sensorsSize < sensorId||sensor.id==-1) return 0;
+    sensor.sensorCounts += counts;
     //si esta entre los anios del rango provisto y counts es mayor que el counts que habia en maxCounts, lo modifica
     if (FromTo[0]==0 ||((year>=FromTo[0] && (year<=FromTo[1]))||FromTo[1]==0)){
-        if (sensor->maxCount->counts < counts){
-            sensor->maxCount->dateFormatted[DAY]=mDate;
-            sensor->maxCount->dateFormatted[MONTH]= monthToNum(month);
-            sensor->maxCount->dateFormatted[YEAR]=year;
-            sensor->maxCount->dateFormatted[HOUR]=time;
+        if (sensor.maxCount.counts < counts){
+            sensor.maxCount.dateFormatted[DAY]=mDate;
+            sensor.maxCount.dateFormatted[MONTH]= monthToNum(month);
+            sensor.maxCount.dateFormatted[YEAR]=year;
+            sensor.maxCount.dateFormatted[HOUR]=time;
         }
     }
     pea->sensorsVec[sensorId-1]=sensor; //paso al ADT lo que modifique
 
     toBeginYear(pea);
-    while (hasNextYear(pea)&&pea->next->year < year){
+    while (hasNextYear(pea) && pea->next->year < year){
         pea->next = pea->next->tail;
     }
     if (pea->next->year > year){
@@ -181,7 +174,7 @@ int addReading(peatonesADT pea, int year, char * month, int mDate, char * day, i
 
 char* getNameById(peatonesADT pea, int sensorID){
     if(  !sensorExists(pea, sensorID) ) return NULL;
-    return pea->sensorsVec[sensorID-1]->name;
+    return pea->sensorsVec[sensorID-1].name;
 } //TESTED
 
 long int getDailyCount(peatonesADT pea, char day, char option){
@@ -208,7 +201,7 @@ int * getSensorIDs(peatonesADT pea, int * dim){
             }
         }
         //si hay un sensor en la posición que estoy revisando quiero quedarme con el id
-        if (pea->sensorsVec[i] != NULL){
+        if (pea->sensorsVec[i].id != -1){
             sensorIDs[j++] = i+1;//se hace el fixeo basandose en que el valor de los ids está "corrido" un lugar respecto de los indices del vec (id=1 -> pos=0)
         }
     }
@@ -217,14 +210,14 @@ int * getSensorIDs(peatonesADT pea, int * dim){
 }//TESTED
 
 long int getSensorCount(peatonesADT pea, int sensorID){
-    return pea->sensorsVec[sensorID-1]->sensorCounts;
+    return pea->sensorsVec[sensorID-1].sensorCounts;
 }//TESTED
 
 int hasNextYear(peatonesADT pea){
     return pea->next != NULL;
 } //NEEDS addReading BEFORE TESTING
 
-static compareInt(int num1, int num2){
+static int compareInt(int num1, int num2){
   return num1 - num2;
 }
 
@@ -256,11 +249,11 @@ void nextYear(peatonesADT pea, long int * yearCount, int * year){
 }
 
 int getMaxReadingById(peatonesADT pea, int id, int * maxCount, char ** name, int date[DATE_FIELDS]){
-    if(!sensorExists(pea, id) || pea->sensorsVec[id-1]->maxCount == NULL) return 0; // chequeo si existe el sensor o si no hay una medida máxima
-    *maxCount = pea->sensorsVec[id-1]->maxCount->counts;
-    *name = pea->sensorsVec[id-1]->name;
-    for (int field = HOUR; field < DATE_FIELDS ; field++) {
-        date[field] = pea->sensorsVec[id-1]->maxCount->dateFormatted[field];
+    if(!sensorExists(pea, id) || pea->sensorsVec[id-1].maxCount.counts == 0) return 0; // chequeo si existe el sensor o si no hay una medida máxima
+    *maxCount = pea->sensorsVec[id-1].maxCount.counts;
+    *name = pea->sensorsVec[id-1].name;
+    for (int field = 0; field < DATE_FIELDS ; field++) {
+        date[field] = pea->sensorsVec[id-1].maxCount.dateFormatted[field];
     }
     return 1;
 } //NEEDS addReading BEFORE TESTING
