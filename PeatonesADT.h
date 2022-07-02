@@ -70,7 +70,8 @@ New Quay;6948;10;1/4/2012
 typedef struct peatonesCDT* peatonesADT;
 typedef enum dateType { DAY=0, MONTH, YEAR, HOUR, DATE_FIELDS } dateType;
 typedef enum daysType { MONDAY=0, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY, CANT_DAYS } daysType;
-
+#define CANT_MONTH 12
+//typedef enum monthType {JAN = 0, FEB, MAR, APR, MAY, JUN, JUL, AUG, SEP, OCT, NOV, DEC, CANT_MONTH} monthType;
 /* peatonesADT newPeatones()
  * Crea y devuelve un TAD vacío
  */
