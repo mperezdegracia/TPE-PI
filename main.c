@@ -152,5 +152,22 @@ int main(int cantArgs, char * args[]) {
             // errores de memoria
         }
     }
-
 }
+
+// Se podria hacer un switch dentro del main
+void addLineQuery1 (char * sensor, long int counts, FILE * query1) {
+    fprintf(query1, "%s;%li\n", sensor, counts);
+}
+
+void addLineQuery2 (int year, long int counts, FILE * query2) {
+    fprintf(query2, "%d;%li\n", year, counts);
+}
+
+void addLineQuery3 (int day, long int dayCounts, long int nightCounts, FILE * query3) {
+    fprintf(query3, "%d;%li;%li;%li\n", day, dayCounts, nightCounts, dayCounts+nightCounts);
+}
+
+void addLineQuery4 (char * sensor, long int maxCount, int * dateFormated, FILE * query4) {
+    fprintf(query4, "%s;%ld;%d;%d/%d/%d\n", sensor, maxCount, dateFormated[3], dateFormated[0], dateFormated[1], dateFormated[2]);
+}
+
