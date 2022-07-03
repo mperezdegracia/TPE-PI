@@ -70,7 +70,8 @@ New Quay;6948;10;1/4/2012
 typedef struct peatonesCDT* peatonesADT;
 typedef enum dateType { DAY=0, MONTH, YEAR, HOUR, DATE_FIELDS } dateType;
 typedef enum daysType { MONDAY=0, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY, CANT_DAYS } daysType;
-
+#define CANT_MONTH 12
+//typedef enum monthType {JAN = 0, FEB, MAR, APR, MAY, JUN, JUL, AUG, SEP, OCT, NOV, DEC, CANT_MONTH} monthType;
 /* peatonesADT newPeatones()
  * Crea y devuelve un TAD vacío
  */
@@ -89,7 +90,7 @@ void putSensor(peatonesADT pea, int id, char * name);
 /* int addReading()
  * incrementa los respectivos counts, si la medición es máxima, entonces actualizo el maxCount del respectivo sensor
  */
-int addReading(peatonesADT pea, int year, char * month, int mDate, char * day, int sensorId, int time, int counts, const int FromTo[2]);   // puse add xq uso listas
+int addReading(peatonesADT pea, int sensorId, const int date[DATE_FIELDS], int counts, const int FromTo[2]);   // puse add xq uso listas
 
 /* int sensorExists()
  * Devuelve 1 si el sensor está en la lista de sensores activos y 0 de lo contrario

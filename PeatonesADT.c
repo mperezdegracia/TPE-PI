@@ -63,7 +63,9 @@ static void freeRecList(TYearList list){
 
 static void freeName(TSensor * sensors, size_t dim){
     for(int i=0; i<dim; i++){
-        free(sensors[i].name);
+        if(sensors[i].id !=-1){
+            free(sensors[i].name);
+        }
     }
     free(sensors);
 }//TESTED
@@ -77,7 +79,7 @@ void freePeatones(peatonesADT pea){
 void putSensor(peatonesADT pea, int id, char * name){
     if(id > pea->sensorsSize){
         // si no tengo espacio en el vector, agrando sensorVec.
-        pea->sensorsVec = realloc(pea->sensorsVec, id * sizeof(pea->sensorsVec[0]));
+        pea->sensorsVec = realloc(pea->sensorsVec, id * sizeof(TSensor));
         for(int i = pea->sensorsSize; i < id; i++)
             pea->sensorsVec[i].id = -1;
         pea->sensorsSize = id;
@@ -92,79 +94,67 @@ void putSensor(peatonesADT pea, int id, char * name){
 }//TESTED
 
 int sensorExists(peatonesADT pea, int id){
-    return (pea->sensorsSize > id-1 && pea->sensorsVec[id-1].id!=-1);
+    return (pea->sensorsSize >= id-1 && pea->sensorsVec[id-1].id!=-1);
 }//TESTED
 
-//si todavia no habia mediciones de ese anio, agrega un nodo a la lista
-static TYearList addYear(TYearList list, int year){
-    if (list==NULL || list->year > year){
+//si todavia no habia mediciones de ese anio, agrega un nodo a la lista y lo completa
+//si ya estaba suma al count
+static TYearList addYear(TYearList list, int year, int count){
+    if (list==NULL || list->year < year){
         TYearList aux = malloc(sizeof(TNodeYear));
         aux->year = year;
-        aux->yearCount = 0;
+        aux->yearCount = count;
         aux->tail = list;
         return aux;
     }
-    if (list->year < year){
-        list->tail = addYear(list->tail, year);
+    if (list->year > year){
+        list->tail = addYear(list->tail, year, count);
+        return list;
     }
+    list->yearCount += count;
     return list;
 }
 
 static int monthToNum(char*month){
-    if (strcmp(month, "January")==0) return 1;
-    if (strcmp(month, "February")==0) return 2;
-    if (strcmp(month, "March")==0) return 3;
-    if (strcmp(month, "April")==0) return 4;
-    if (strcmp(month, "May")==0) return 5;
-    if (strcmp(month, "June")==0) return 6;
-    if (strcmp(month, "July")==0) return 7;
-    if (strcmp(month, "August")==0) return 8;
-    if (strcmp(month, "September")==0) return 9;
-    if (strcmp(month, "October")==0) return 10;
-    if (strcmp(month, "November")==0) return 11;
-    //si es December
-    return 12;
+    char * months[CANT_MONTH] = {"January", "February", "March","April","May", "June", "July",
+                                 "August", "September", "October", "November", "December"};
+    for(int i=0; i<CANT_MONTH; i++){
+        if(strcmp(month, months[i])==0)return i+1;
+    }
+    return -1;
 }
 
-static int weekDayToNum (char*day){
-    if (strcmp(day, "Monday")==0) return 0;
-    if (strcmp(day, "Tuesday")==0) return 1;
-    if (strcmp(day, "Wednesday")==0) return 2;
-    if (strcmp(day, "Thursday")==0) return 3;
-    if (strcmp(day, "Friday")==0) return 4;
-    if (strcmp(day, "Saturday")==0) return 5;
-    //si es Sunday
-    return 6;
+static int weekDayToNum (char day[10]){
+    char * days[CANT_DAYS] = {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"};
+    for(int i=0; i<CANT_DAYS; i++){
+        if(strcmp(day, days[i])==0)return i;
+    }
+    return -1;
 }
 
 //el vector FromTo tiene en el indice 0 desde que anio y en el indice 1 hasta que anio se debe considerar para el maxCount,
 //y 0 si no se especifico un rango o un hasta(ambos espacios son 0 o FromTo[1]==0, respectivamente)
-int addReading(peatonesADT pea, int year, char * month, int mDate, char * day, int sensorId, int time, int counts, const int FromTo[2]){
+int addReading(peatonesADT pea, int sensorId, const int date[DATE_FIELDS], int counts, const int FromTo[2]){
+    if (!(sensorExists(pea, sensorId)))return 0;
+
     TSensor sensor = pea->sensorsVec[sensorId-1];
-    if (pea->sensorsSize < sensorId||sensor.id==-1) return 0;
     sensor.sensorCounts += counts;
     //si esta entre los anios del rango provisto y counts es mayor que el counts que habia en maxCounts, lo modifica
-    if (FromTo[0]==0 ||((year>=FromTo[0] && (year<=FromTo[1]))||FromTo[1]==0)){
+    if (FromTo[0]==0 ||((date[YEAR]>=FromTo[0] && (date[YEAR]<=FromTo[1]))||FromTo[1]==0)){
         if (sensor.maxCount.counts < counts){
-            sensor.maxCount.dateFormatted[DAY]=mDate;
-            sensor.maxCount.dateFormatted[MONTH]= monthToNum(month);
-            sensor.maxCount.dateFormatted[YEAR]=year;
-            sensor.maxCount.dateFormatted[HOUR]=time;
+            sensor.maxCount.counts = counts;
+            sensor.maxCount.dateFormatted[DAY]=date[DAY];
+            sensor.maxCount.dateFormatted[MONTH]= date[MONTH];
+            sensor.maxCount.dateFormatted[YEAR]=date[YEAR];
+            sensor.maxCount.dateFormatted[HOUR]=date[HOUR];
         }
     }
     pea->sensorsVec[sensorId-1]=sensor; //paso al ADT lo que modifique
 
-    toBeginYear(pea);
-    while (hasNextYear(pea) && pea->next->year < year){
-        pea->next = pea->next->tail;
-    }
-    if (pea->next->year > year){
-        pea->next = addYear(pea->next, year);
-    }
-    pea->next->yearCount += counts;
+    pea->first = addYear(pea->first, date[YEAR], counts);
 
-    int weekDay = weekDayToNum(day);
-    if (time >= 6 && time < 18){
+    int weekDay = date[DAY];
+    if (date[HOUR] >= 6 && date[HOUR] < 18){
         pea->dayVec[weekDay].daylightCount += counts;
     } else
         pea->dayVec[weekDay].nightCount += counts;
