@@ -21,7 +21,7 @@ typedef enum sensorFieldType {SENSOR_ID = 0, NAME, STATUS, CANT_FIELDS_SENSOR} s
 
 int main(int cantArgs, char * args[]) {
 
-    if(cantArgs != 5){
+    if(cantArgs < 3 || cantArgs > 5){
         //función que de error
     }
 
@@ -34,10 +34,10 @@ int main(int cantArgs, char * args[]) {
 
 //  Declaración de Archivos
 
-    FILE * query1 = fopen("query1.csv", "w+");
-    FILE * query2 = fopen("query2.csv", "w+");
-    FILE * query3 = fopen("query3.csv", "w+");
-    FILE * query4 = fopen("query4.csv", "w+");
+    FILE * query1 = fopen("query1.csv", "w");
+    FILE * query2 = fopen("query2.csv", "w");
+    FILE * query3 = fopen("query3.csv", "w");
+    FILE * query4 = fopen("query4.csv", "w");
     FILE * dataSensors = fopen(args[2], "r");
     FILE * dataReadings= fopen(args[1], "r");
 
