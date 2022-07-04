@@ -116,7 +116,7 @@ static TYearList addYear(TYearList list, int year, int count){
 }
 
 
-static int weekDayToNum (char day[10]){
+static int weekDayToNum (const char *day){
     char * days[CANT_DAYS] = {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"};
     for(int i=0; i<CANT_DAYS; i++){
         if(strcmp(day, days[i])==0)return i;
@@ -145,7 +145,7 @@ int addReading(peatonesADT pea, int sensorId, const int date[DATE_FIELDS], const
 
     pea->first = addYear(pea->first, date[YEAR], counts);
 
-    int weekDay = ;
+    int weekDay = weekDayToNum(day);
     if (date[HOUR] >= 6 && date[HOUR] < 18){
         pea->dayVec[weekDay].daylightCount += counts;
     } else
