@@ -90,7 +90,7 @@ void putSensor(peatonesADT pea, int id, char * name);
 /* int addReading()
  * incrementa los respectivos counts, si la medición es máxima, entonces actualizo el maxCount del respectivo sensor
  */
-int addReading(peatonesADT pea, int sensorId, const int date[DATE_FIELDS], int counts, const int FromTo[2]);   // puse add xq uso listas
+int addReading(peatonesADT pea, int sensorId, const int date[DATE_FIELDS], const char * day, int counts, const int FromTo[2]);   // puse add xq uso listas
 
 /* int sensorExists()
  * Devuelve 1 si el sensor está en la lista de sensores activos y 0 de lo contrario

@@ -115,14 +115,6 @@ static TYearList addYear(TYearList list, int year, int count){
     return list;
 }
 
-static int monthToNum(char*month){
-    char * months[CANT_MONTH] = {"January", "February", "March","April","May", "June", "July",
-                                 "August", "September", "October", "November", "December"};
-    for(int i=0; i<CANT_MONTH; i++){
-        if(strcmp(month, months[i])==0)return i+1;
-    }
-    return -1;
-}
 
 static int weekDayToNum (char day[10]){
     char * days[CANT_DAYS] = {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"};
@@ -134,7 +126,7 @@ static int weekDayToNum (char day[10]){
 
 //el vector FromTo tiene en el indice 0 desde que anio y en el indice 1 hasta que anio se debe considerar para el maxCount,
 //y 0 si no se especifico un rango o un hasta(ambos espacios son 0 o FromTo[1]==0, respectivamente)
-int addReading(peatonesADT pea, int sensorId, const int date[DATE_FIELDS], int counts, const int FromTo[2]){
+int addReading(peatonesADT pea, int sensorId, const int date[DATE_FIELDS], const char * day, int counts, const int FromTo[2]){
     if (!(sensorExists(pea, sensorId)))return 0;
 
     TSensor sensor = pea->sensorsVec[sensorId-1];
@@ -153,7 +145,7 @@ int addReading(peatonesADT pea, int sensorId, const int date[DATE_FIELDS], int c
 
     pea->first = addYear(pea->first, date[YEAR], counts);
 
-    int weekDay = date[DAY];
+    int weekDay = ;
     if (date[HOUR] >= 6 && date[HOUR] < 18){
         pea->dayVec[weekDay].daylightCount += counts;
     } else
