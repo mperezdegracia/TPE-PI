@@ -19,6 +19,12 @@ typedef enum readingFieldType {R_YEAR = 0, R_MONTH, MDATE, R_DAY, ID, TIME, COUN
 
 typedef enum sensorFieldType {SENSOR_ID = 0, NAME, STATUS, CANT_FIELDS_SENSOR} sensorFieldType;
 
+
+
+//funcion auxiliar que pasa al siguiente token
+char * update(char * token){
+    return token = strtok(NULL, DELIM_FIELD);
+}
 //funcion auxiliar que devuelve el numero del mes
 static int monthToNum(char*month){
     char * months[CANT_MONTH] = {"January", "February", "March","April","May", "June", "July",
@@ -85,10 +91,21 @@ int main(int argc, char * argv[]) {
     while(fgets(buff, BUFF_SIZE, dataSensors) != NULL) { //leo las lineas del archivo hasta el final, guardo la linea en buff hasta BUFF_SIZE caracteres.
 
         token = strtok(buff, DELIM_FIELD);
-        flag= TRUE;
+        // flag= TRUE;
         // despues de la llamada inicial, strtok debe llevar NULL como primer argumento
         // una vez que se termine la linea, token queda en NULL
+       id = atoi(token);
+        if(!sensorExists(tad, id)) { // si el id no es duplicado
+            token = update(token);
+            name = token;
+            token = update(token);
+            if (strcmp(token, "A")==0){
+                putSensor(tad, id, name); // creo los sensores
+            }
+        }
+    }
 
+/*
         for(int field = 0; field < CANT_FIELDS_SENSOR && token != NULL && flag ; field++, token = strtok(NULL, DELIM_FIELD)) {
 
             switch(field) {
@@ -112,7 +129,7 @@ int main(int argc, char * argv[]) {
             // errores de memoria
         }
     }
-
+*/
 // *************************************************************** DATA READINGS ************************************************************************************
 
 //  VARIABLES QUE LLENAMOS CON DATA_SENSORS
@@ -127,10 +144,28 @@ int main(int argc, char * argv[]) {
     while(fgets(buff, BUFF_SIZE, dataReadings) != NULL) { //leo las lineas del archivo hasta el final, guardo la linea en buff hasta BUFF_SIZE caracteres.
 
         token = strtok(buff, DELIM_FIELD);
-        flag= TRUE;
+        // flag= TRUE;
         // despues de la llamada inicial, strtok debe llevar NULL como primer argumento
         // una vez que se termine la linea, token queda en NULL
+        dateFormatted[YEAR] = atoi(token);
+        token = update(token);
+        dateFormatted[MONTH] = monthToNum(token);
+        token = update(token);
+        dateFormatted[DAY] = atoi(token);
+        token = update(token);
+        Wday = token;
+        token = update(token);
+        sensorId = atoi(token);
+        token = update(token);
+        dateFormatted[HOUR] = atoi(token);
+        token = update(token);
+        counts = atoi(token);
+        token = update(token); //token vale NULL
 
+        if(sensorExists(tad, id)) {     // se ignoran los sensores repetidos y desactivados
+            addReading(tad, id, dateFormatted, Wday, counts, fromTo); // creo los sensores
+        }
+        /*
         for(int field = 0; field < CANT_FIELDS_READING && token != NULL && flag ; field++, token = strtok(NULL, DELIM_FIELD)) {
 
             switch(field) {
@@ -165,6 +200,7 @@ int main(int argc, char * argv[]) {
         if(errno == ENOMEM){
             // errores de memoria
         }
+        */
     }
 }
 
