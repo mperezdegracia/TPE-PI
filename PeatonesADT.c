@@ -132,7 +132,7 @@ int addReading(peatonesADT pea, int sensorId, const int date[DATE_FIELDS], const
     TSensor sensor = pea->sensorsVec[sensorId-1];
     sensor.sensorCounts += counts;
     //si esta entre los anios del rango provisto y counts es mayor que el counts que habia en maxCounts, lo modifica
-    if (FromTo[0]==0 ||((date[YEAR]>=FromTo[0] && (date[YEAR]<=FromTo[1]))||FromTo[1]==0)){
+    if (FromTo[0]==0 || (date[YEAR]>=FromTo[0] && ((date[YEAR]<=FromTo[1]) || FromTo[1]==0))){
         if (sensor.maxCount.counts < counts){
             sensor.maxCount.counts = counts;
             sensor.maxCount.dateFormatted[DAY]=date[DAY];
@@ -166,7 +166,7 @@ long int getDailyCount(peatonesADT pea, char day, char option){
     }
     else
         return pea->dayVec[(int)day].daylightCount;
-} //NEEDS addReading BEFORE TESTING
+} //TESTED
 
 int * getSensorIDs(peatonesADT pea, int * dim){
     int i, j;
@@ -197,38 +197,22 @@ long int getSensorCount(peatonesADT pea, int sensorID){
 
 int hasNextYear(peatonesADT pea){
     return pea->next != NULL;
-} //NEEDS addReading BEFORE TESTING
+} //TESTED
 
 static int compareInt(int num1, int num2){
   return num1 - num2;
 }
 
-/*
- static int getYearRec(TYearList list, int year){
-    if(list==NULL || compareInt(list->year, year) < 0) return -1;
-    if(list->year == year){
-        return year;
-    }
-    return getYearRec(list->tail, year);
-} //NEEDS addReading BEFORE TESTING
-
-long int getYearCount(peatonesADT pea, int year){
-    return getYearRec(pea->first, year);
-
-}
-*/
-
-
 void toBeginYear(peatonesADT pea){
     pea->next = pea->first;
-} //NEEDS addReading BEFORE TESTING (POSSIBLE: CHECK NULL STATEMENT)
+} //TESTED
 
 void nextYear(peatonesADT pea, long int * yearCount, int * year){
     assert(hasNextYear(pea));
     *yearCount = pea->next->yearCount;
     *year = pea->next->year;
     pea->next =  pea->next->tail;
-}
+}//TESTED
 
 int getMaxReadingById(peatonesADT pea, int id, int * maxCount, char ** name, int date[DATE_FIELDS]){
     if(!sensorExists(pea, id) || pea->sensorsVec[id-1].maxCount.counts == 0) return 0; // chequeo si existe el sensor o si no hay una medida máxima
@@ -238,7 +222,7 @@ int getMaxReadingById(peatonesADT pea, int id, int * maxCount, char ** name, int
         date[field] = pea->sensorsVec[id-1].maxCount.dateFormatted[field];
     }
     return 1;
-} //NEEDS addReading BEFORE TESTING
+} //TESTED
 
 
 
