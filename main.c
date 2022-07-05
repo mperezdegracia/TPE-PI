@@ -19,6 +19,15 @@ typedef enum readingFieldType {R_YEAR = 0, R_MONTH, MDATE, R_DAY, ID, TIME, COUN
 
 typedef enum sensorFieldType {SENSOR_ID = 0, NAME, STATUS, CANT_FIELDS_SENSOR} sensorFieldType;
 
+//  Imprime un mensaje de error y aborta el programa
+void errorExit (int errValue, char * errMessage, char * arg);
+
+//  Imprime un mensaje de error y cierra todos los archivos y aborta el programa
+void closeExit (FILE * files[], int errValue, char * errMessage, char * arg, size_t fileCount);
+
+//  Cierraa todos los archivos
+void closeAllFiles (FILE * files[], size_t fileCount);
+
 
 
 //funcion auxiliar que pasa al siguiente token
@@ -38,7 +47,8 @@ static int monthToNum(char*month){
 int main(int argc, char * argv[]) {
 
     if(argc < 3 || argc > 6){
-        //función que de error
+        // EINVAL: argumento invalido
+        errorExit(EINVAL, "Cantidad invalida de argumentos\n", argv[0]);
     }
 
 
@@ -61,22 +71,24 @@ int main(int argc, char * argv[]) {
     size_t fileCount = CANT_QUERYS + argc - 1;
 
 
-//  Revisar que los archivos no sean NULL
-
-
-    for(int i = 0; i < fileCount; i++) {
+//  Revisamos que los archivos no sean NULL, de lo contrario cierra todos, da un mensaje de error y aborta el programa
+    // ENOENT: no existe dicho archivo.
+    // ENOMEM: memoria insuficiente
+    if (files[0] == NULL || files[1] == NULL) {
+        closeExit(files, ENOENT, "No se pudo abrir uno de los archivos\n", argv[0]);
+    }
+    for(size_t i = 2; i < fileCount; i++) {
         if (files[i] == NULL) {
-            //cerrar archivos y error
+            closeExit(files, ENOMEM, "No se pudo abrir uno de los archivos\n", argv[0]);
         }
     }
-
 
 
     peatonesADT  tad = newPeatones(); //  NUEVO TAD
 
     if (tad == NULL || errno == ENOMEM) { //  SI NO SE PUDO CREAR EL TAD
-        //closeFiles(files, fileCount);
-        //errNOut("No hay memoria disponible en el heap", ENOMEM);
+        closeAllFiles(files, fileCount);
+        errorExit(ENOMEM, "No hay memoria suficiente en el heap\n");
     }
 //  VARIABLES QUE LLENAMOS CON DATA_SENSORS
     int id, flag;
@@ -219,4 +231,22 @@ void addLineQuery3 (int day, long int dayCounts, long int nightCounts, FILE * qu
 
 void addLineQuery4 (char * sensor, long int maxCount, int * dateFormated, FILE * query4) {
     fprintf(query4, "%s;%ld;%d;%d/%d/%d\n", sensor, maxCount, dateFormated[3], dateFormated[0], dateFormated[1], dateFormated[2]);
+}
+
+void errorExit (int errValue, char * errMessage, char * arg) {
+    fprintf(stderr, "%s : %s\n", arg, errMessage);
+    exit(errValue);
+}
+
+void closeExit (FILE * files[], int errValue, char * errMessage, char * arg, size_t fileCount) {
+    closeAllFiles(files, fileCount);
+    errorExit(errValue, errMessage, arg);
+}
+
+void closeAllFiles (FILE * files[], size_t fileCount) {
+    for(size_t i = 0; i < fileCount; i++) {
+        if (files[i] != NULL) {
+            fclose(files[i]);
+        }
+    }
 }
