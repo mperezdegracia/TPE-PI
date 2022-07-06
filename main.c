@@ -4,6 +4,7 @@
 #include <string.h>
 #include <assert.h>
 #include <errno.h>
+#include <ctype.h>
 
 #define CANT_QUERYS 4
 #define BUFF_SIZE 512
@@ -46,9 +47,12 @@ static int monthToNum(char*month){
 
 int main(int argc, char * argv[]) {
 
-    if(argc < 3 || argc > 6){
-        // EINVAL: argumento invalido
-        errorExit(EINVAL, "Cantidad invalida de argumentos\n", argv[0]);
+    // Validacion de parametros (EINVAL: argumento invalido)
+    if (argc < 3 || argc > 5) {
+        errorExit(EINVAL, "Cantidad invalida de argumentos", argv[0]);
+    }
+    if ((argc > 3 && !isnumber(*argv[3])) || (argc == 5 && (!isnumber(*argv[4]) || atoi(argv[3]) > atoi(argv[4])))) {
+        errorExit(EINVAL, "Los parametros son incorrectos", argv[0]);
     }
 
 
@@ -75,11 +79,11 @@ int main(int argc, char * argv[]) {
     // ENOENT: no existe dicho archivo.
     // ENOMEM: memoria insuficiente
     if (files[0] == NULL || files[1] == NULL) {
-        closeExit(files, ENOENT, "No se pudo abrir uno de los archivos\n", argv[0]);
+        closeExit(files, ENOENT, "Los parametros son incorrectos", argv[0], fileCount);
     }
     for(size_t i = 2; i < fileCount; i++) {
         if (files[i] == NULL) {
-            closeExit(files, ENOMEM, "No se pudo abrir uno de los archivos\n", argv[0]);
+            closeExit(files, ENOMEM, "No se pudo abrir uno de los archivos", argv[0], fileCount);
         }
     }
 
@@ -87,7 +91,7 @@ int main(int argc, char * argv[]) {
     peatonesADT  tad = newPeatones(); //  NUEVO TAD
 
     if (tad == NULL || errno == ENOMEM) { //  SI NO SE PUDO CREAR EL TAD
-        closeExit(ENOMEM, "No hay memoria suficiente en el heap\n");
+        closeExit(files, ENOMEM, "No hay memoria suficiente en el heap", argv[0], fileCount);
     }
 //  VARIABLES QUE LLENAMOS CON DATA_SENSORS
     int id, flag;
@@ -98,7 +102,7 @@ int main(int argc, char * argv[]) {
     // Si la primer linea del archivo dataSensors esta vacia, retorna un mensaje de error y aborta el programa
     if (fgets(buff, BUFF_SIZE, dataSensors) == NULL) {
         freePeatones(tad);
-        closeExit(EINVAL, "El archivo ingresado esta vacio\n");
+        closeExit(files, EINVAL, "El archivo ingresado esta vacio", argv[0], fileCount);
     }
 
     while(fgets(buff, BUFF_SIZE, dataSensors) != NULL) { //leo las lineas del archivo hasta el final, guardo la linea en buff hasta BUFF_SIZE caracteres.
@@ -141,7 +145,7 @@ int main(int argc, char * argv[]) {
         if(errno == ENOMEM){
             // errores de memoria
             freePeatones(tad);
-            closeExit(ENOMEM, "No hay memoria suficiente\n");
+            closeExit(files, ENOMEM, "No hay memoria suficiente", argv[0], fileCount);
         }
     }
 */
@@ -154,7 +158,7 @@ int main(int argc, char * argv[]) {
     int fromTo[FROM_TO] = { atoi(argv[3]), atoi(argv[4]) };
     if (fgets(buff, BUFF_SIZE, dataReadings) == NULL) {
         freePeatones(tad);
-        closeExit(EINVAL, "El archivo ingresado esta vacio\n");
+        closeExit(files, EINVAL, "El archivo ingresado esta vacio", argv[0], fileCount);
     }
 
     while(fgets(buff, BUFF_SIZE, dataReadings) != NULL) { //leo las lineas del archivo hasta el final, guardo la linea en buff hasta BUFF_SIZE caracteres.
@@ -216,7 +220,7 @@ int main(int argc, char * argv[]) {
         if(errno == ENOMEM){
             // errores de memoria
             freePeatones(tad);
-            closeExit(ENOMEM, "No hay memoria suficiente\n");
+            closeExit(files, ENOMEM, "No hay memoria suficiente, argv[0], fileCount");
         }
         */
     }
