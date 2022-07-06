@@ -30,6 +30,14 @@ void closeExit (FILE * files[], int errValue, char * errMessage, char * arg, siz
 void closeAllFiles (FILE * files[], size_t fileCount);
 
 
+//recibe un string y devuelve 1 si es un numero y 0 en caso contrario
+int isnumber(const char * num){
+    while(*num != 0){
+        if (!isdigit(*num)) return 0;
+        num++;
+    }
+    return 1;
+}
 
 //funcion auxiliar que pasa al siguiente token
 char * update(const char * token){
@@ -51,7 +59,7 @@ int main(int argc, char * argv[]) {
     if (argc < 3 || argc > 5) {
         errorExit(EINVAL, "Cantidad invalida de argumentos", argv[0]);
     }
-    if ((argc > 3 && !isnumber(*argv[3])) || (argc == 5 && (!isnumber(*argv[4]) || atoi(argv[3]) > atoi(argv[4])))) {
+    if ((argc > 3 && !isnumber(argv[3])) || (argc == 5 && (!isnumber(argv[4]) || atoi(argv[3]) > atoi(argv[4])))) {
         errorExit(EINVAL, "Los parametros son incorrectos", argv[0]);
     }
 
