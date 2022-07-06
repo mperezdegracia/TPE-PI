@@ -188,7 +188,7 @@ char* getNameById(peatonesADT pea, int sensorID){
     return pea->sensorsVec[sensorID-1].name;
 } //TESTED
 
-long int getDailyCount(peatonesADT pea, char day, char option){
+long int getDailyCount(peatonesADT pea, int day, char option){
     //partiendo de que los parametros day y option son válidos se devuelve el campo que almacena los resultados totales de peatones por día y según el horario
     if(day < 0 || day > 6) return EDAY;
     if (option){

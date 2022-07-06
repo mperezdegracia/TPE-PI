@@ -149,7 +149,7 @@ int hasMaxReading(peatonesADT pea, int id);
 /* long int getDailyCount()
  *      Devuelve la cantidad de peatones en horario diurno/nocturno del día especificado, se pasa un BOOL donde 0 es para daylight y 1 es para night
  */
-long int getDailyCount(peatonesADT pea, char day, char option);
+long int getDailyCount(peatonesADT pea, int day, char night);
 
 /* getMaxReadingById()
  * Devuelve 1 si tuvo éxito o 0 si hubo error. deja los campos en los parámetros de salida de un sensor con SensorId=id
