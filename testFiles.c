@@ -4,7 +4,6 @@
 #include <string.h>
 #include <assert.h>
 #include <errno.h>
-#include <ctype.h>
 
 #define CANT_QUERYS 4
 #define BUFF_SIZE 512
@@ -20,21 +19,9 @@ typedef enum readingFieldType {R_YEAR = 0, R_MONTH, MDATE, R_DAY, ID, TIME, COUN
 
 typedef enum sensorFieldType {SENSOR_ID = 0, NAME, STATUS, CANT_FIELDS_SENSOR} sensorFieldType;
 
-//  Imprime un mensaje de error y aborta el programa
-void errorExit (int errValue, char * errMessage, char * arg);
 
-//  Imprime un mensaje de error y cierra todos los archivos y aborta el programa
-void closeExit (FILE * files[], int errValue, char * errMessage, char * arg, size_t fileCount);
+void closeFiles(FILE* files[], int cantFiles);
 
-//  Cierraa todos los archivos
-void closeAllFiles (FILE * files[], size_t fileCount);
-
-
-
-//funcion auxiliar que pasa al siguiente token
-char * update(const char * token){
-    return strtok(NULL, DELIM_FIELD);
-}
 //funcion auxiliar que devuelve el numero del mes
 static int monthToNum(char*month){
     char * months[CANT_MONTH] = {"January", "February", "March","April","May", "June", "July",
@@ -47,145 +34,86 @@ static int monthToNum(char*month){
 
 int main(int argc, char * argv[]) {
 
-    // Validacion de parametros (EINVAL: argumento invalido)
-    if (argc < 3 || argc > 5) {
-        errorExit(EINVAL, "Cantidad invalida de argumentos", argv[0]);
-    }
-    if ((argc > 3 && !isnumber(*argv[3])) || (argc == 5 && (!isnumber(*argv[4]) || atoi(argv[3]) > atoi(argv[4])))) {
-        errorExit(EINVAL, "Los parametros son incorrectos", argv[0]);
-    }
-
-
-
-// errores
-    errno = 0;
-
-
-
-//  Declaración de Archivos
-
 
     FILE * dataSensors = fopen(argv[2], "r");
     FILE * dataReadings= fopen(argv[1], "r");
-    FILE * query1 = fopen("query1.csv", "w");
+/*    FILE * query1 = fopen("query1.csv", "w");
     FILE * query2 = fopen("query2.csv", "w");
     FILE * query3 = fopen("query3.csv", "w");
-    FILE * query4 = fopen("query4.csv", "w");
-    FILE * files[] = {dataSensors, dataReadings, query1, query2, query3, query4};
-    size_t fileCount = CANT_QUERYS + argc - 1;
+    FILE * query4 = fopen("query4.csv", "w");*/
+    FILE * files[] = {dataSensors, dataReadings};    //, query1, query2, query3, query4};
+    size_t fileCount = 2;//CANT_QUERYS + argc - 1;
 
 
-    // Revisamos que los archivos no sean NULL, de lo contrario cierra todos, da un mensaje de error y aborta el programa
-    // ENOENT: no existe dicho archivo.
-    // ENOMEM: memoria insuficiente
-    if (files[0] == NULL || files[1] == NULL) {
-        closeExit(files, ENOENT, "Los parametros son incorrectos", argv[0], fileCount);
-    }
-    for(size_t i = 2; i < fileCount; i++) {
+//  Revisar que los archivos no sean NULL
+
+
+    for(int i = 0; i < fileCount; i++) {
         if (files[i] == NULL) {
-            closeExit(files, ENOMEM, "No se pudo abrir uno de los archivos", argv[0], fileCount);
+            printf("ERROR -- ARCHIVO VACIO");
+            exit(-1);//cerrar archivos y error
         }
+        else printf("file %d detected!", i);
     }
-
 
     peatonesADT  tad = newPeatones(); //  NUEVO TAD
 
-    if (tad == NULL || errno == ENOMEM) { //  SI NO SE PUDO CREAR EL TAD
-        closeExit(files, ENOMEM, "No hay memoria suficiente en el heap", argv[0], fileCount);
-    }
 //  VARIABLES QUE LLENAMOS CON DATA_SENSORS
     int id, flag;
     char* name;
     char status;
     char buff[BUFF_SIZE], * token; // en buff se van a ir llegando las lineas del .csv. BUFF_SIZE es un tamaño arbitrario
 
-    // Si la primer linea del archivo dataSensors esta vacia, retorna un mensaje de error y aborta el programa
     if (fgets(buff, BUFF_SIZE, dataSensors) == NULL) {
-        freePeatones(tad);
-        closeExit(files, EINVAL, "El archivo ingresado esta vacio", argv[0], fileCount);
+        //si está vacío ERROR
     }
 
     while(fgets(buff, BUFF_SIZE, dataSensors) != NULL) { //leo las lineas del archivo hasta el final, guardo la linea en buff hasta BUFF_SIZE caracteres.
 
         token = strtok(buff, DELIM_FIELD);
-        // flag= TRUE;
+        flag = TRUE;
         // despues de la llamada inicial, strtok debe llevar NULL como primer argumento
         // una vez que se termine la linea, token queda en NULL
-       id = atoi(token);
-        if(!sensorExists(tad, id)) { // si el id no es duplicado
-            token = update(token);
-            name = token;
-            token = update(token);
-            if (token[0] == 'A'){
-                putSensor(tad, id, name); // creo los sensores
-            }
-        }
-    }
+        for (int field = 0; field < CANT_FIELDS_SENSOR && token != NULL && flag; field++, token = strtok(NULL, DELIM_FIELD)) {
 
-/*
-        for(int field = 0; field < CANT_FIELDS_SENSOR && token != NULL && flag ; field++, token = strtok(NULL, DELIM_FIELD)) {
-
-            switch(field) {
+            switch (field) {
                 case SENSOR_ID:
                     id = atoi(token); //str to int  "12"->12
-                    if(sensorExists(tad, id)) flag = FALSE; // id duplicado
+                    if (sensorExists(tad, id)) flag = FALSE; // id duplicado
                     break;
                 case NAME:
                     name = token;
                     break;
                 case STATUS:
-                    if (strcmp(token, "R")==0) flag = FALSE;  // removido
+                    if (token[0] == 'R') {
+                        flag = FALSE;  // removido
+                    }
                     break;
             }
         }
-        if(flag==TRUE) {     // se ignoran los sensores repetidos y desactivados
+        if (flag == TRUE) {     // se ignoran los sensores repetidos y desactivados
             putSensor(tad, id, name); // creo los sensores
         }
-
-        if(errno == ENOMEM){
-            // errores de memoria
-            freePeatones(tad);
-            closeExit(files, ENOMEM, "No hay memoria suficiente", argv[0], fileCount);
-        }
     }
-*/
+
 // *************************************************************** DATA READINGS ************************************************************************************
 
 //  VARIABLES QUE LLENAMOS CON DATA_SENSORS
     char * Wday;
     int sensorId, counts;
     int dateFormatted[DATE_FIELDS];
-    int fromTo[FROM_TO] = { atoi(argv[3]), atoi(argv[4]) };
+    int fromTo[FROM_TO]= {0,0};
+    //int fromTo[FROM_TO] = { atoi(argv[3]), atoi(argv[4]) };
     if (fgets(buff, BUFF_SIZE, dataReadings) == NULL) {
-        freePeatones(tad);
-        closeExit(files, EINVAL, "El archivo ingresado esta vacio", argv[0], fileCount);
+        //si está vacío ERROR
     }
 
     while(fgets(buff, BUFF_SIZE, dataReadings) != NULL) { //leo las lineas del archivo hasta el final, guardo la linea en buff hasta BUFF_SIZE caracteres.
 
         token = strtok(buff, DELIM_FIELD);
-        // flag= TRUE;
+        flag= TRUE;
         // despues de la llamada inicial, strtok debe llevar NULL como primer argumento
         // una vez que se termine la linea, token queda en NULL
-        dateFormatted[YEAR] = atoi(token);
-        token = update(token);
-        dateFormatted[MONTH] = monthToNum(token);
-        token = update(token);
-        dateFormatted[DAY] = atoi(token);
-        token = update(token);
-        Wday = token;
-        token = update(token);
-        sensorId = atoi(token);
-        token = update(token);
-        dateFormatted[HOUR] = atoi(token);
-        token = update(token);
-        counts = atoi(token);
-        token = update(token); //token vale NULL
-
-        if(sensorExists(tad, id)) {     // se ignoran los sensores repetidos y desactivados
-            addReading(tad, id, dateFormatted, Wday, counts, fromTo); // creo los sensores
-        }
-        /*
         for(int field = 0; field < CANT_FIELDS_READING && token != NULL && flag ; field++, token = strtok(NULL, DELIM_FIELD)) {
 
             switch(field) {
@@ -215,21 +143,33 @@ int main(int argc, char * argv[]) {
         }
         if(flag==TRUE) {     // se ignoran los sensores repetidos y desactivados
             addReading(tad, id, dateFormatted, Wday, counts, fromTo); // creo los sensores
-        }
 
-        if(errno == ENOMEM){
-            // errores de memoria
-            freePeatones(tad);
-            closeExit(files, ENOMEM, "No hay memoria suficiente, argv[0], fileCount");
         }
-        */
+    }
+    eliminaCeros(tad);
+    for(int i=1; i <= getCantSensores(tad); i++){
+        printf("\n %s |  %d \n", getNameById(tad, i) ,getMaxCount(tad, i));
+    }
+    sortTotal(tad);
+    printf("\n \n \n");
+    for(int i=1; i <= getCantSensores(tad); i++){
+        printf("\n %s |  %d \n", getNameById(tad, i) ,getMaxCount(tad, i));
+        printf("%d", getCantSensores(tad));
     }
 
-
-    //  Cerramos los archivos y liberamos la memoria
-
-    closeAllFiles(files, fileCount);
+    closeFiles(files, fileCount);
     freePeatones(tad);
+}
+void closeFiles(FILE* files[], int cantFiles){
+    for(int i=0; i<cantFiles; i++){
+        fclose(files[i]);
+    }
+}
+void errorExit(FILE * files[], int cantFiles, char * msg, int code, peatonesADT tad ){
+    closeFiles(files, cantFiles);
+    freePeatones(tad);
+    printf("%s", msg);
+    exit(code);
 }
 
 // Se podria hacer un switch dentro del main
@@ -249,20 +189,4 @@ void addLineQuery4 (char * sensor, long int maxCount, int * dateFormated, FILE *
     fprintf(query4, "%s;%ld;%d;%d/%d/%d\n", sensor, maxCount, dateFormated[3], dateFormated[0], dateFormated[1], dateFormated[2]);
 }
 
-void errorExit (int errValue, char * errMessage, char * arg) {
-    fprintf(stderr, "%s : %s\n", arg, errMessage);
-    exit(errValue);
-}
 
-void closeExit (FILE * files[], int errValue, char * errMessage, char * arg, size_t fileCount) {
-    closeAllFiles(files, fileCount);
-    errorExit(errValue, errMessage, arg);
-}
-
-void closeAllFiles (FILE * files[], size_t fileCount) {
-    for(size_t i = 0; i < fileCount; i++) {
-        if (files[i] != NULL) {
-            fclose(files[i]);
-        }
-    }
-}

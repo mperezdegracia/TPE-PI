@@ -8,7 +8,8 @@
 *.ko
 *.obj
 *.elf
-
+*.csv
+testFiles
 # Linker output
 *.ilk
 *.map
