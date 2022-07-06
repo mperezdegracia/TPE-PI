@@ -1,5 +1,7 @@
 /.idea/
 /cmake-build-debug/
+wpedestrians
+/Data/
 # Prerequisites
 *.d
 
@@ -8,8 +10,8 @@
 *.ko
 *.obj
 *.elf
-*.csv
-testFiles
+*query*
+test*
 # Linker output
 *.ilk
 *.map

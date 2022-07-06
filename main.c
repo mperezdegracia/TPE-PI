@@ -29,6 +29,10 @@ void closeExit (FILE * files[], int errValue, char * errMessage, char * arg, siz
 //  Cierraa todos los archivos
 void closeAllFiles (FILE * files[], size_t fileCount);
 
+int loadQuery1(peatonesADT tad, FILE* query1);
+int loadQuery4(peatonesADT tad, FILE* query4);
+int loadQuery3(peatonesADT tad, FILE* query3);
+int loadQuery2(peatonesADT tad, FILE* query2);
 
 //recibe un string y devuelve 1 si es un numero y 0 en caso contrario
 int isnumber(const char * num){
@@ -63,15 +67,10 @@ int main(int argc, char * argv[]) {
         errorExit(EINVAL, "Los parametros son incorrectos", argv[0]);
     }
 
-
-
 // errores
     errno = 0;
 
-
-
 //  Declaración de Archivos
-
 
     FILE * dataSensors = fopen(argv[2], "r");
     FILE * dataReadings= fopen(argv[1], "r");
@@ -80,7 +79,7 @@ int main(int argc, char * argv[]) {
     FILE * query3 = fopen("query3.csv", "w");
     FILE * query4 = fopen("query4.csv", "w");
     FILE * files[] = {dataSensors, dataReadings, query1, query2, query3, query4};
-    size_t fileCount = CANT_QUERYS + argc - 1;
+    size_t fileCount = CANT_QUERYS + argc - 3;
 
 
     // Revisamos que los archivos no sean NULL, de lo contrario cierra todos, da un mensaje de error y aborta el programa
@@ -96,7 +95,6 @@ int main(int argc, char * argv[]) {
             errorExit(ENOMEM, "No se pudo abrir uno de los archivos", argv[0]);
         }
     }
-
 
     peatonesADT  tad = newPeatones(); //  NUEVO TAD
 
@@ -132,32 +130,6 @@ int main(int argc, char * argv[]) {
         }
     }
 
-/*
-        for(int field = 0; field < CANT_FIELDS_SENSOR && token != NULL && flag ; field++, token = strtok(NULL, DELIM_FIELD)) {
-
-            switch(field) {
-                case SENSOR_ID:
-                    id = atoi(token); //str to int  "12"->12
-                    if(sensorExists(tad, id)) flag = FALSE; // id duplicado
-                    break;
-                case NAME:
-                    name = token;
-                    break;
-                case STATUS:
-                    if (strcmp(token, "R")==0) flag = FALSE;  // removido
-                    break;
-            }
-        }
-        if(flag==TRUE) {     // se ignoran los sensores repetidos y desactivados
-            putSensor(tad, id, name); // creo los sensores
-        }
-
-        if(errno == ENOMEM){
-            // errores de memoria
-            closeExit(files, ENOMEM, "No hay memoria suficiente", argv[0], fileCount, tad);
-        }
-    }
-*/
 // *************************************************************** DATA READINGS ************************************************************************************
 
 //  VARIABLES QUE LLENAMOS CON DATA_SENSORS
@@ -190,69 +162,20 @@ int main(int argc, char * argv[]) {
         counts = atoi(token);
         token = update(token); //token vale NULL
 
-        if(sensorExists(tad, sensorId)) {     // se ignoran los sensores repetidos y desactivados
+        if (sensorExists(tad, sensorId)) {     // se ignoran los sensores repetidos y desactivados
             addReading(tad, sensorId, dateFormatted, Wday, counts, fromTo); // creo los sensores
         }
-        /*
-        for(int field = 0; field < CANT_FIELDS_READING && token != NULL && flag ; field++, token = strtok(NULL, DELIM_FIELD)) {
-
-            switch(field) {
-                case ID:
-                    id = atoi(token); //str to int  "12"->12
-                    if(!sensorExists(tad, id)) flag = FALSE; // no hay un sensor asociado al reading
-                    break;
-                case R_YEAR:
-                    dateFormatted[YEAR] = atoi(token);
-                    break;
-                case R_MONTH:
-                    dateFormatted[MONTH] = monthToNum(token);
-                    break;
-                case R_DAY:
-                    dateFormatted[DAY] = atoi(token);
-                    break;
-                case TIME:
-                    dateFormatted[HOUR] = atoi(token);
-                    break;
-                case COUNTS:
-                    counts = atoi(token);
-                    break;
-                case MDATE:
-                    Wday = token;
-                    break;
-            }
-        }
-        if(flag==TRUE) {     // se ignoran los sensores repetidos y desactivados
-            addReading(tad, id, dateFormatted, Wday, counts, fromTo); // creo los sensores
-        }
-
-        if(errno == ENOMEM){
-            // errores de memoria
-            closeExit(files, ENOMEM, "No hay memoria suficiente", argv[0], fileCount, tad);
-        }
-        */
     }
-
-
-    //  Cerramos los archivos y liberamos la memoria
+    eliminaCeros(tad);
+    loadQuery1(tad, query1);
+    loadQuery2(tad, query2);
+    loadQuery3(tad, query3);
+    loadQuery4(tad, query4);
 
     closeAllFiles(files, fileCount);
     freePeatones(tad);
 }
 
-// Se podria hacer un switch dentro del main
-void addLineQuery1 (char * sensor, long int counts, FILE * query1) {
-    fprintf(query1, "%s;%li\n", sensor, counts);
-}
-
-void addLineQuery2 (int year, long int counts, FILE * query2) {
-    fprintf(query2, "%d;%li\n", year, counts);
-}
-
-/*
-void addLineQuery3 (int day, long int dayCounts, long int nightCounts, FILE * query3) {
-    fprintf(query3, "%d;%li;%li;%li\n", day, dayCounts, nightCounts, dayCounts+nightCounts);
-}
-*/
 
 //función que escribe sobre el archivo query2.csv con los resultados de la consulta
 //devuelve 1 si no hubo problemas en la escritura del archivo o 0 si hubo un error
@@ -265,12 +188,46 @@ int loadQuery2(peatonesADT pea, FILE * query2){
         counts = getCount(pea);
         status = fprintf(query2, "%d;%li\n", year, counts);;
         if (status < 0){
-            return FALSE;
+            return EFILE;
         }
+        nextYear(pea);
     }
-    return TRUE;
+    return OK;
 }
 
+int loadQuery1(peatonesADT tad, FILE* query1){
+    sortTotal(tad);
+    long int count;
+    char* name;
+    for(int i=1; i <= getCantSensores(tad); i++) {
+        count = getSensorCount(tad, i);
+        name = getNameById(tad, i);
+        if (name == NULL || count == EID) {
+            // errorExit();  // hubo algún tipo de error al cargar
+        }
+        int res = fprintf(query1, "%s;%li\n", name, count);
+        if (res < 0) return EFILE;
+    }
+    return OK;
+
+}
+int loadQuery4(peatonesADT tad, FILE* query4){
+    sortMax(tad);
+    int count, date;
+    char* name;
+    int dateFormatted[DATE_FIELDS];
+    for(int i=1; i <= getCantSensores(tad); i++){
+        count = getMaxCount(tad, i);
+        name = getNameById(tad, i);
+        date = getDate(tad, i, dateFormatted);
+        if(name == NULL || count == EID || date == EID){
+            // errorExit();
+        }
+        int res = fprintf(query4, "%s;%d;%d;%d/%d/%d\n", name, count, dateFormatted[3], dateFormatted[0], dateFormatted[1], dateFormatted[2]);
+        if(res < 0) return EFILE;
+    }
+    return OK;
+}
 int loadQuery3(peatonesADT pea, FILE * query3){
     long int nightCount, dayCount;
     for(int day = MONDAY; day<CANT_DAYS; day++){
@@ -284,9 +241,6 @@ int loadQuery3(peatonesADT pea, FILE * query3){
     return 1;
 }
 
-void addLineQuery4 (char * sensor, long int maxCount, int * dateFormated, FILE * query4) {
-    fprintf(query4, "%s;%ld;%d;%d/%d/%d\n", sensor, maxCount, dateFormated[3], dateFormated[0], dateFormated[1], dateFormated[2]);
-}
 
 void errorExit (int errValue, char * errMessage, char * arg) {
     fprintf(stderr, "%s : %s\n", arg, errMessage);
