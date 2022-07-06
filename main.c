@@ -59,7 +59,7 @@ int main(int argc, char * argv[]) {
     if (argc < 3 || argc > 5) {
         errorExit(EINVAL, "Cantidad invalida de argumentos", argv[0]);
     }
-    if ((argc > 3 && !isnumber(*argv[3])) || (argc == 5 && (!isnumber(*argv[4]) || atoi(argv[3]) > atoi(argv[4])))) {
+    if ((argc > 3 && !isnumber(argv[3])) || (argc == 5 && (!isnumber(argv[4]) || atoi(argv[3]) > atoi(argv[4])))) {
         errorExit(EINVAL, "Los parametros son incorrectos", argv[0]);
     }
 
@@ -253,6 +253,23 @@ void addLineQuery3 (int day, long int dayCounts, long int nightCounts, FILE * qu
     fprintf(query3, "%d;%li;%li;%li\n", day, dayCounts, nightCounts, dayCounts+nightCounts);
 }
 */
+
+//función que escribe sobre el archivo query2.csv con los resultados de la consulta
+//devuelve 1 si no hubo problemas en la escritura del archivo o 0 si hubo un error
+int loadQuery2(peatonesADT pea, FILE * query2){
+    toBeginYear(pea);
+    int year, status;
+    long int counts;
+    while (hasNextYear(pea)){
+        year = getYear(pea);
+        counts = getCount(pea);
+        status = fprintf(query2, "%d;%li\n", year, counts);;
+        if (status < 0){
+            return FALSE;
+        }
+    }
+    return TRUE;
+}
 
 int loadQuery3(peatonesADT pea, FILE * query3){
     long int nightCount, dayCount;

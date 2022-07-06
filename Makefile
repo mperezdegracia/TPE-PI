@@ -10,7 +10,7 @@ all: $(OBJECT_FILES)
 debug: COMPILER+=$(DEBUG_COMPILER)
 debug: all
 main.o: main.c
-	$(COMPILER) -c main.c ($FLAGS)
+	$(COMPILER) -c main.c $(FLAGS)
 PeatonesADT.o: PeatonesADT.c PeatonesADT.h
 	$(COMPILER) -c PeatonesADT.c PeatonesADT.h $(FLAGS)
 cleanAll: cleanQueries cleanObjects cleanExecutable
