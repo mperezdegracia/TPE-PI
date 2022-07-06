@@ -12,7 +12,7 @@
 
 #define TRUE !FALSE
 #define DELIM_FIELD ";"
-
+#define EFILE (-2)
 
 
 typedef enum readingFieldType {R_YEAR = 0, R_MONTH, MDATE, R_DAY, ID, TIME, COUNTS , CANT_FIELDS_READING} readingFieldType;
@@ -21,6 +21,12 @@ typedef enum sensorFieldType {SENSOR_ID = 0, NAME, STATUS, CANT_FIELDS_SENSOR} s
 
 
 void closeFiles(FILE* files[], int cantFiles);
+int loadQuery1(peatonesADT tad, FILE* query1);
+int loadQuery4(peatonesADT tad, FILE* query4);
+void addLineQuery2 (int year, long int counts, FILE * query2);
+void addLineQuery1 (char * sensor, long int counts, FILE * query1);
+void addLineQuery3 (int day, long int dayCounts, long int nightCounts, FILE * query3);
+void addLineQuery4 (char * sensor, long int maxCount, int * dateFormated, FILE * query4);
 
 //funcion auxiliar que devuelve el numero del mes
 static int monthToNum(char*month){
@@ -37,12 +43,12 @@ int main(int argc, char * argv[]) {
 
     FILE * dataSensors = fopen(argv[2], "r");
     FILE * dataReadings= fopen(argv[1], "r");
-/*    FILE * query1 = fopen("query1.csv", "w");
-    FILE * query2 = fopen("query2.csv", "w");
-    FILE * query3 = fopen("query3.csv", "w");
-    FILE * query4 = fopen("query4.csv", "w");*/
-    FILE * files[] = {dataSensors, dataReadings};    //, query1, query2, query3, query4};
-    size_t fileCount = 2;//CANT_QUERYS + argc - 1;
+    FILE * query1 = fopen("query1.csv", "w+");
+    FILE * query2 = fopen("query2.csv", "w+");
+    FILE * query3 = fopen("query3.csv", "w+");
+    FILE * query4 = fopen("query4.csv", "w+");
+    FILE * files[] = {dataSensors, dataReadings, query1, query2, query3, query4};
+    size_t fileCount = CANT_QUERYS + argc - 1;
 
 
 //  Revisar que los archivos no sean NULL
@@ -53,7 +59,7 @@ int main(int argc, char * argv[]) {
             printf("ERROR -- ARCHIVO VACIO");
             exit(-1);//cerrar archivos y error
         }
-        else printf("file %d detected!", i);
+        else printf("file %d detected! \n", i);
     }
 
     peatonesADT  tad = newPeatones(); //  NUEVO TAD
@@ -146,16 +152,14 @@ int main(int argc, char * argv[]) {
 
         }
     }
+    //limpio el vector de sensores, eliminando los espacios vacío asi es mas fácil ordenar.
     eliminaCeros(tad);
-    for(int i=1; i <= getCantSensores(tad); i++){
-        printf("\n %s |  %d \n", getNameById(tad, i) ,getMaxCount(tad, i));
-    }
-    sortTotal(tad);
-    printf("\n \n \n");
-    for(int i=1; i <= getCantSensores(tad); i++){
-        printf("\n %s |  %d \n", getNameById(tad, i) ,getMaxCount(tad, i));
-        printf("%d", getCantSensores(tad));
-    }
+
+    //IMPRIR LOS HEADS DE LOS ARCHIVOS
+    loadQuery1(tad, query1);
+    loadQuery4(tad, query4);
+
+
 
     closeFiles(files, fileCount);
     freePeatones(tad);
@@ -171,22 +175,41 @@ void errorExit(FILE * files[], int cantFiles, char * msg, int code, peatonesADT 
     printf("%s", msg);
     exit(code);
 }
-
 // Se podria hacer un switch dentro del main
-void addLineQuery1 (char * sensor, long int counts, FILE * query1) {
-    fprintf(query1, "%s;%li\n", sensor, counts);
+
+int loadQuery1(peatonesADT tad, FILE* query1){
+    sortTotal(tad);
+    long int count;
+    char* name;
+    for(int i=1; i <= getCantSensores(tad); i++) {
+        count = getSensorCount(tad, i);
+        name = getNameById(tad, i);
+        if (name == NULL || count == EID) {
+            // errorExit();  // hubo algún tipo de error al cargar
+        }
+        int res = fprintf(query1, "%s;%li\n", name, count);
+        if (res < 0) return EFILE;
+    }
+    return OK;
+
+}
+int loadQuery4(peatonesADT tad, FILE* query4){
+    sortMax(tad);
+    int count, date;
+    char* name;
+    int dateFormatted[DATE_FIELDS];
+    for(int i=1; i <= getCantSensores(tad); i++){
+        count = getMaxCount(tad, i);
+        name = getNameById(tad, i);
+        date = getDate(tad, i, dateFormatted);
+        if(name == NULL || count == EID || date == EID){
+            // errorExit();
+        }
+        int res = fprintf(query4, "%s;%ld;%d;%d/%d/%d\n", name, count, dateFormatted[3], dateFormatted[0], dateFormatted[1], dateFormatted[2]);
+        if(res < 0) return EFILE;
+    }
+    return OK;
 }
 
-void addLineQuery2 (int year, long int counts, FILE * query2) {
-    fprintf(query2, "%d;%li\n", year, counts);
-}
-
-void addLineQuery3 (int day, long int dayCounts, long int nightCounts, FILE * query3) {
-    fprintf(query3, "%d;%li;%li;%li\n", day, dayCounts, nightCounts, dayCounts+nightCounts);
-}
-
-void addLineQuery4 (char * sensor, long int maxCount, int * dateFormated, FILE * query4) {
-    fprintf(query4, "%s;%ld;%d;%d/%d/%d\n", sensor, maxCount, dateFormated[3], dateFormated[0], dateFormated[1], dateFormated[2]);
-}
 
 

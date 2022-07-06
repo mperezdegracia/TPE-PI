@@ -239,10 +239,8 @@ int hasMaxReading(peatonesADT pea, int id){
     if(!sensorExists(pea, id)) return EID;
     return pea->sensorsVec[id-1].maxCount.counts!=0;
 }
-int getMaxReadingById(peatonesADT pea, int id, int * maxCount, char ** name, int date[DATE_FIELDS]){
+int getDate(peatonesADT pea, int id, int date[DATE_FIELDS]){
     if(!sensorExists(pea, id)) return EID; // chequeo si existe el sensor o si no hay una medida máxima
-    *maxCount = pea->sensorsVec[id-1].maxCount.counts;
-    *name = pea->sensorsVec[id-1].name;
     for (int field = 0; field < DATE_FIELDS ; field++) {
         date[field] = pea->sensorsVec[id-1].maxCount.dateFormatted[field];
     }
@@ -275,7 +273,6 @@ int compareMax (const void * a, const void * b) {
         return strcmp(r1->name, r2->name);
     }
     return r2->maxCount.counts - r1->maxCount.counts;
-    //return r1->maxCount.counts - r2->maxCount.counts;
 }
 int compareTotal (const void * a, const void * b) {
     TSensor *r1 = (TSensor *) a;
@@ -283,7 +280,10 @@ int compareTotal (const void * a, const void * b) {
     if( r1->sensorCounts == r2->sensorCounts){
         return strcmp(r1->name, r2->name);
     }
-    return (int)(r2->sensorCounts - r1->sensorCounts);
+    if(r2->sensorCounts > r1->sensorCounts) {
+        return 1;
+    }
+    return -1;
 }
 
 

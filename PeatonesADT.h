@@ -154,8 +154,10 @@ long int getDailyCount(peatonesADT pea, char day, char option);
 /* getMaxReadingById()
  * Devuelve 1 si tuvo éxito o 0 si hubo error. deja los campos en los parámetros de salida de un sensor con SensorId=id
  */
-int getMaxReadingById(peatonesADT pea, int id, int * maxCount, char ** name, int date[DATE_FIELDS]); // hay que formatear el date
+int getDate(peatonesADT pea, int id, int date[DATE_FIELDS]);
+
 int getMaxCount(peatonesADT pea, int id);
+
 void sortMax(peatonesADT pea);
 
 void sortTotal(peatonesADT pea);
