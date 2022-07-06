@@ -24,7 +24,7 @@ typedef enum sensorFieldType {SENSOR_ID = 0, NAME, STATUS, CANT_FIELDS_SENSOR} s
 void errorExit (int errValue, char * errMessage, char * arg);
 
 //  Imprime un mensaje de error y cierra todos los archivos y aborta el programa
-void closeExit (FILE * files[], int errValue, char * errMessage, char * arg, size_t fileCount);
+void closeExit (FILE * files[], int errValue, char * errMessage, char * arg, size_t fileCount, peatonesADT tad);
 
 //  Cierraa todos los archivos
 void closeAllFiles (FILE * files[], size_t fileCount);
@@ -59,7 +59,7 @@ int main(int argc, char * argv[]) {
     if (argc < 3 || argc > 5) {
         errorExit(EINVAL, "Cantidad invalida de argumentos", argv[0]);
     }
-    if ((argc > 3 && !isnumber(argv[3])) || (argc == 5 && (!isnumber(argv[4]) || atoi(argv[3]) > atoi(argv[4])))) {
+    if ((argc > 3 && !isnumber(*argv[3])) || (argc == 5 && (!isnumber(*argv[4]) || atoi(argv[3]) > atoi(argv[4])))) {
         errorExit(EINVAL, "Los parametros son incorrectos", argv[0]);
     }
 
@@ -87,11 +87,13 @@ int main(int argc, char * argv[]) {
     // ENOENT: no existe dicho archivo.
     // ENOMEM: memoria insuficiente
     if (files[0] == NULL || files[1] == NULL) {
-        closeExit(files, ENOENT, "Los parametros son incorrectos", argv[0], fileCount);
+        closeAllFiles(files, fileCount);
+        errorExit(ENOENT, "Los parametros son incorrectos", argv[0]);
     }
     for(size_t i = 2; i < fileCount; i++) {
         if (files[i] == NULL) {
-            closeExit(files, ENOMEM, "No se pudo abrir uno de los archivos", argv[0], fileCount);
+            closeAllFiles(files, fileCount);
+            errorExit(ENOMEM, "No se pudo abrir uno de los archivos", argv[0]);
         }
     }
 
@@ -99,7 +101,8 @@ int main(int argc, char * argv[]) {
     peatonesADT  tad = newPeatones(); //  NUEVO TAD
 
     if (tad == NULL || errno == ENOMEM) { //  SI NO SE PUDO CREAR EL TAD
-        closeExit(files, ENOMEM, "No hay memoria suficiente en el heap", argv[0], fileCount);
+        closeAllFiles(files, fileCount);
+        errorExit(ENOMEM, "No hay memoria suficiente en el heap", argv[0]);
     }
 //  VARIABLES QUE LLENAMOS CON DATA_SENSORS
     int id, flag;
@@ -109,8 +112,7 @@ int main(int argc, char * argv[]) {
 
     // Si la primer linea del archivo dataSensors esta vacia, retorna un mensaje de error y aborta el programa
     if (fgets(buff, BUFF_SIZE, dataSensors) == NULL) {
-        freePeatones(tad);
-        closeExit(files, EINVAL, "El archivo ingresado esta vacio", argv[0], fileCount);
+        closeExit(files, EINVAL, "El archivo ingresado esta vacio", argv[0], fileCount, tad);
     }
 
     while(fgets(buff, BUFF_SIZE, dataSensors) != NULL) { //leo las lineas del archivo hasta el final, guardo la linea en buff hasta BUFF_SIZE caracteres.
@@ -152,8 +154,7 @@ int main(int argc, char * argv[]) {
 
         if(errno == ENOMEM){
             // errores de memoria
-            freePeatones(tad);
-            closeExit(files, ENOMEM, "No hay memoria suficiente", argv[0], fileCount);
+            closeExit(files, ENOMEM, "No hay memoria suficiente", argv[0], fileCount, tad);
         }
     }
 */
@@ -165,8 +166,7 @@ int main(int argc, char * argv[]) {
     int dateFormatted[DATE_FIELDS];
     int fromTo[FROM_TO] = { atoi(argv[3]), atoi(argv[4]) };
     if (fgets(buff, BUFF_SIZE, dataReadings) == NULL) {
-        freePeatones(tad);
-        closeExit(files, EINVAL, "El archivo ingresado esta vacio", argv[0], fileCount);
+        closeExit(files, EINVAL, "El archivo ingresado esta vacio", argv[0], fileCount, tad);
     }
 
     while(fgets(buff, BUFF_SIZE, dataReadings) != NULL) { //leo las lineas del archivo hasta el final, guardo la linea en buff hasta BUFF_SIZE caracteres.
@@ -227,8 +227,7 @@ int main(int argc, char * argv[]) {
 
         if(errno == ENOMEM){
             // errores de memoria
-            freePeatones(tad);
-            closeExit(files, ENOMEM, "No hay memoria suficiente, argv[0], fileCount");
+            closeExit(files, ENOMEM, "No hay memoria suficiente", argv[0], fileCount, tad);
         }
         */
     }
@@ -277,7 +276,8 @@ void errorExit (int errValue, char * errMessage, char * arg) {
     exit(errValue);
 }
 
-void closeExit (FILE * files[], int errValue, char * errMessage, char * arg, size_t fileCount) {
+void closeExit (FILE * files[], int errValue, char * errMessage, char * arg, size_t fileCount, peatonesADT tad) {
+    freePeatones(tad);
     closeAllFiles(files, fileCount);
     errorExit(errValue, errMessage, arg);
 }
