@@ -14,14 +14,16 @@ int main(void){
         putSensor(tad, id, "Street");
         assert(getSensorCount(tad,id) == 0);
     }
-    int dim;
-    int * sensors = getSensorIDs(tad, &dim);
-    assert(dim == 19);
-    for(int i=0; i<19; i++) {
+    int size = getCantSensores(tad);
+    int sensors[size];
+    getSensorIDs(tad, sensors);
+    assert(size == 19);
+    for(int i=0; i<size; i++) {
         printf("sensor ID: %d\n", sensors[i]);
         assert(sensors[i] == i+1);
     }
-    free(sensors);
+
     freePeatones(tad);
+    printf("OK");
     return 0;
 }

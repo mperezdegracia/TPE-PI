@@ -86,29 +86,27 @@ int main(void) {
     addReading(tad, 146, date3, "Friday", 1879, range);
     addReading(tad, 140, date4, "Saturday", 36829, range);
     addReading(tad, 40, date5, "Sunday", 89726, range);
-    toBeginYear(tad);
-    int year;
-    long int yearCount;
+
     //verificamos que los años queden ordenados en orden descendente
-    nextYear(tad, &yearCount, &year);
-    assert(year == 2022);
-    assert(yearCount == 89726);
-    nextYear(tad, &yearCount,&year);
-    assert(year == 2021);
-    assert(yearCount == 89389);
-    nextYear(tad, &yearCount,&year);
-    assert(year == 2017);
-    assert(yearCount == 36829);
-    nextYear(tad, &yearCount,&year);
-    assert(year == 2015);
-    assert(yearCount == 61879);
+    toBeginYear(tad);
+    assert(getYear(tad) == 2022);
+    assert(getCount(tad) == 89726);
+    nextYear(tad);
+    assert(getYear(tad) == 2021);
+    assert(getCount(tad) == 89389);
+    nextYear(tad);
+    assert(getYear(tad) == 2017);
+    assert(getCount(tad) == 36829);
+    nextYear(tad);
+    assert(getYear(tad) == 2015);
+    assert(getCount(tad) == 61879);
+    nextYear(tad);
     //verificamos que la medición no sea incorporada porque correspondería a un sensor no incluido en el archivo de sensores de importancia
     assert(hasNextYear(tad) == 0);
     //verificamos que se actualice el iterador
     toBeginYear(tad);
-    nextYear(tad, &yearCount, &year);
-    assert(year == 2022);
-    assert(yearCount == 89726);
+    assert(getYear(tad) == 2022);
+    assert(getCount(tad) == 89726);
     //verificamos por día de la semana que se hayan actualizado los contadores en función del horario de las mediciones
     //daysType { MONDAY=0, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY, CANT_DAYS }
     assert(getDailyCount(tad, 2, 0) == 89389);
@@ -135,6 +133,7 @@ int main(void) {
     for (j = 0; j < DATE_FIELDS; j++) {
         assert(date[j] == date5[j]);
     }
+    printf("OK");
     freePeatones(tad);
 }
 
