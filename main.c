@@ -71,7 +71,7 @@ int main(int argc, char * argv[]) {
     size_t fileCount = CANT_QUERYS + argc - 1;
 
 
-//  Revisamos que los archivos no sean NULL, de lo contrario cierra todos, da un mensaje de error y aborta el programa
+    // Revisamos que los archivos no sean NULL, de lo contrario cierra todos, da un mensaje de error y aborta el programa
     // ENOENT: no existe dicho archivo.
     // ENOMEM: memoria insuficiente
     if (files[0] == NULL || files[1] == NULL) {
@@ -87,8 +87,7 @@ int main(int argc, char * argv[]) {
     peatonesADT  tad = newPeatones(); //  NUEVO TAD
 
     if (tad == NULL || errno == ENOMEM) { //  SI NO SE PUDO CREAR EL TAD
-        closeAllFiles(files, fileCount);
-        errorExit(ENOMEM, "No hay memoria suficiente en el heap\n");
+        closeExit(ENOMEM, "No hay memoria suficiente en el heap\n");
     }
 //  VARIABLES QUE LLENAMOS CON DATA_SENSORS
     int id, flag;
@@ -96,8 +95,10 @@ int main(int argc, char * argv[]) {
     char status;
     char buff[BUFF_SIZE], * token; // en buff se van a ir llegando las lineas del .csv. BUFF_SIZE es un tamaño arbitrario
 
+    // Si la primer linea del archivo dataSensors esta vacia, retorna un mensaje de error y aborta el programa
     if (fgets(buff, BUFF_SIZE, dataSensors) == NULL) {
-    //si está vacío ERROR
+        freePeatones(tad);
+        closeExit(EINVAL, "El archivo ingresado esta vacio\n");
     }
 
     while(fgets(buff, BUFF_SIZE, dataSensors) != NULL) { //leo las lineas del archivo hasta el final, guardo la linea en buff hasta BUFF_SIZE caracteres.
@@ -139,6 +140,8 @@ int main(int argc, char * argv[]) {
 
         if(errno == ENOMEM){
             // errores de memoria
+            freePeatones(tad);
+            closeExit(ENOMEM, "No hay memoria suficiente\n");
         }
     }
 */
@@ -150,7 +153,8 @@ int main(int argc, char * argv[]) {
     int dateFormatted[DATE_FIELDS];
     int fromTo[FROM_TO] = { atoi(argv[3]), atoi(argv[4]) };
     if (fgets(buff, BUFF_SIZE, dataReadings) == NULL) {
-        //si está vacío ERROR
+        freePeatones(tad);
+        closeExit(EINVAL, "El archivo ingresado esta vacio\n");
     }
 
     while(fgets(buff, BUFF_SIZE, dataReadings) != NULL) { //leo las lineas del archivo hasta el final, guardo la linea en buff hasta BUFF_SIZE caracteres.
@@ -211,9 +215,17 @@ int main(int argc, char * argv[]) {
 
         if(errno == ENOMEM){
             // errores de memoria
+            freePeatones(tad);
+            closeExit(ENOMEM, "No hay memoria suficiente\n");
         }
         */
     }
+
+
+    //  Cerramos los archivos y liberamos la memoria
+
+    closeAllFiles(files, fileCount);
+    freePeatones(tad);
 }
 
 // Se podria hacer un switch dentro del main
