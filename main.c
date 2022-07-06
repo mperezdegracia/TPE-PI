@@ -249,8 +249,23 @@ void addLineQuery2 (int year, long int counts, FILE * query2) {
     fprintf(query2, "%d;%li\n", year, counts);
 }
 
+/*
 void addLineQuery3 (int day, long int dayCounts, long int nightCounts, FILE * query3) {
     fprintf(query3, "%d;%li;%li;%li\n", day, dayCounts, nightCounts, dayCounts+nightCounts);
+}
+*/
+
+int loadQuery3(peatonesADT pea, FILE * query3){
+    long int nightCount, dayCount;
+    for(int day = MONDAY; day<CANT_DAYS; day++){
+        nightCount = getDailyCount(pea, day, TRUE);
+        dayCount = getDailyCount(pea, day, FALSE);
+        if ( nightCount < 0 || dayCount < 0){
+            return 0;
+        }
+        fprintf(query3, "%d;%li;%li;%li\n", day, dayCount, nightCount, dayCount+nightCount);
+    }
+    return 1;
 }
 
 void addLineQuery4 (char * sensor, long int maxCount, int * dateFormated, FILE * query4) {
