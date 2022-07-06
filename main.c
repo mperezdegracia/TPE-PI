@@ -190,8 +190,8 @@ int main(int argc, char * argv[]) {
         counts = atoi(token);
         token = update(token); //token vale NULL
 
-        if(sensorExists(tad, id)) {     // se ignoran los sensores repetidos y desactivados
-            addReading(tad, id, dateFormatted, Wday, counts, fromTo); // creo los sensores
+        if(sensorExists(tad, sensorId)) {     // se ignoran los sensores repetidos y desactivados
+            addReading(tad, sensorId, dateFormatted, Wday, counts, fromTo); // creo los sensores
         }
         /*
         for(int field = 0; field < CANT_FIELDS_READING && token != NULL && flag ; field++, token = strtok(NULL, DELIM_FIELD)) {
