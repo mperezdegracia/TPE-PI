@@ -75,7 +75,7 @@ int main(void) {
     int date1[DATE_FIELDS] = {30,5,2021,12};
     int date2[DATE_FIELDS] = {21,2,2015,22};
     int date3[DATE_FIELDS] = {21,0,2012,3};
-    int date4[DATE_FIELDS] = {13,2,2015,22};
+    int date4[DATE_FIELDS] = {13,2,2017,22};
     int date5[DATE_FIELDS] = {31,11,2022,23};
     //incorporamos los sensores que deberían aparecer en el archivo de sensors usando la función ya testeada
     putSensor(tad, 40, "Street 1");
@@ -135,6 +135,6 @@ int main(void) {
     for (j = 0; j < DATE_FIELDS; j++) {
         assert(date[j] == date5[j]);
     }
-
+    freePeatones(tad);
 }
 
