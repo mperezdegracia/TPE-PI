@@ -31,8 +31,8 @@ void closeAllFiles (FILE * files[], size_t fileCount);
 
 
 //funcion auxiliar que pasa al siguiente token
-char * update(char * token){
-    return token = strtok(NULL, DELIM_FIELD);
+char * update(const char * token){
+    return strtok(NULL, DELIM_FIELD);
 }
 //funcion auxiliar que devuelve el numero del mes
 static int monthToNum(char*month){
@@ -112,7 +112,7 @@ int main(int argc, char * argv[]) {
             token = update(token);
             name = token;
             token = update(token);
-            if (strcmp(token, "A")==0){
+            if (token[0] == 'A'){
                 putSensor(tad, id, name); // creo los sensores
             }
         }
