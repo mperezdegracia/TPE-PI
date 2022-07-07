@@ -85,11 +85,10 @@ int main(int argc, char * argv[]){
             break;
     }
 
+    // **********DECLARACION DE ARCHIVOS **********
 
-// **************************************************** DECLARACION DE ARCHIVOS **********************************************************************************
-
-    FILE * dataSensors = fopen(argv[2], "r");
-    FILE * dataReadings= fopen(argv[1], "r");
+    FILE * dataSensors = fopen(argv[FILE2], "r");
+    FILE * dataReadings= fopen(argv[FILE1], "r");
     FILE * query1 = fopen("query1.csv", "w");
     FILE * query2 = fopen("query2.csv", "w");
     FILE * query3 = fopen("query3.csv", "w");
@@ -151,7 +150,7 @@ int main(int argc, char * argv[]){
     if (!validArg){
         closeExit(files, EINVAL, "los parametros del rango de años son incorrectos", argv[0], fileCount, tad);
     } else if (loadQuery4 (tad, query4) < 0) {
-        closeExit(files, EFILE, "Hubo un error en la carga del query4", argv[0], fileCount, tad);
+        closeExit(files, E_FILE, "Hubo un error en la carga del query4", argv[0], fileCount, tad);
     }
 
     closeAllFiles(files, fileCount);
@@ -290,12 +289,14 @@ int loadQuery4 (peatonesADT tad, FILE * query4){
     int dateFormatted[DATE_FIELDS];
     for (int i=1; i <= getSensorsAmount(tad); i++){
         count = getMaxCount(tad, i);
-        if(count == 0) return IGNORE;
-        name = getNameById(tad, i);
-        getDate(tad, i, dateFormatted);
-        int res = fprintf(query4, "%s;%d;%d;%d/%d/%d\n", name, count, dateFormatted[3], dateFormatted[0], dateFormatted[1], dateFormatted[2]);
-        if (res < 0)
-            return E_FILE;
+        if(count) { //si el sensor tiene mediciones (si no tiene mediciones no tiene maximo, asi que no imprime nada)
+            name = getNameById(tad, i);
+            getDate(tad, i, dateFormatted);
+            int res = fprintf(query4, "%s;%d;%d;%d/%d/%d\n", name, count, dateFormatted[3], dateFormatted[0],
+                              dateFormatted[1], dateFormatted[2]);
+            if (res < 0)
+                return E_FILE;
+        }
     }
     return OK;
 }
@@ -323,7 +324,7 @@ int monthToNum (char * month){
     return E_NOT_FOUND;
 }
 char * numToDay (int num){
-    char * weekDay[CANT_DAYS] {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"};
+    char * weekDay[CANT_DAYS] = {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"};
     if (num < 0 || num >= CANT_DAYS){
         return NULL;
     }

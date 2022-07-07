@@ -2,19 +2,21 @@
 #define TPE_PEATONESADT_H
 
 typedef struct peatonesCDT* peatonesADT;
+
 typedef enum dateType { DAY=0, MONTH, YEAR, HOUR, DATE_FIELDS } dateType;
-typedef enum daysType { MONDAY=0, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY, CANT_DAYS } daysType;
+
 //definición de constantes simbolicas para errores del programa, no definidas en otras librerías utilizadas
 #define E_NOT_FOUND (-1)    //Errores por elementos no encontrados/utilizados
 #define E_FILE (-2)         //Errores de lectura/escritura de archivos
-#define E_ID (-3)           //Error por id's de sensores no activos
+#define E_ID (-3)           //Error por id's de sensores inexistentes o repetidos
 #define E_DAY (-4)          //Error por dias no validos dado daysType
 #define E_NO_NEXT (-5)      //Error por intentar modificar lo apuntado por el iterador hacia un elemento fuera de la lista
-
 #define IGNORE (-6)
+#define OK 0
 
 #define CANT_MONTH 12
-#define OK 0
+#define MONDAY 0
+#define CANT_DAYS 7
 
 
 /*
@@ -94,7 +96,7 @@ long int getCount(peatonesADT pea);
 /*
  * Devuelve la cantidad de sensores activos.
  */
-int getSensorsAmount(peatonesADT pea);
+unsigned long getSensorsAmount(peatonesADT pea);
 
 /*
  *  Devuelve la cantidad de peatones en horario diurno/nocturno segun el dia y horario especificados.

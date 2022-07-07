@@ -1,6 +1,5 @@
 #include "PeatonesADT.h"
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include <errno.h>
 
@@ -31,9 +30,9 @@ typedef struct NodeYear{
 typedef TNodeYear * TYearList;
 
 typedef struct peatonesCDT {
-    size_t amountSensors;   // cantidad de sensores activos que hay en el vector
+    unsigned int amountSensors;   // cantidad de sensores activos que hay en el vector
     TSensor * sensorsVec;  // vector dinámico de estructuras TSensor, cada sensor (con cierto Id) esta en el indice [sensor Id-1]
-    size_t sensorsSize;   // dimension del vector de sensores
+    unsigned int sensorsSize;   // dimension del vector de sensores
 
     TYearList first;  // el primer nodo de la lista que guarda la informacion segun el anio
     TYearList next;  // iterador para la lista
@@ -188,7 +187,7 @@ long int getDailyCount(peatonesADT pea, int day, char option){
     return pea->dayVec[(int)day].daylightCount;
 }
 
-int getSensorsAmount(peatonesADT pea){
+unsigned long getSensorsAmount(peatonesADT pea){
     return pea->amountSensors;
 }
 
@@ -236,25 +235,6 @@ int getMaxCount(peatonesADT pea, int id){
     return pea->sensorsVec[id-1].maxCount.counts;
 }
 
-void sortMax(peatonesADT pea){
-    qsort(pea->sensorsVec, pea->sensorsSize, sizeof(pea->sensorsVec[0]), compareMax);
-}
-
-void sortTotal(peatonesADT pea){
-    qsort(pea->sensorsVec, pea->sensorsSize, sizeof(pea->sensorsVec[0]), compareTotal);
-}
-
-void deleteGaps(peatonesADT pea){
-    int i, j;
-    for( i=0, j=0; j < pea->cantSensores && i < pea->sensorsSize; i++){
-        if(pea->sensorsVec[i].id != E_NOT_FOUND){
-            pea->sensorsVec[j++] = pea->sensorsVec[i];
-        }
-    }
-    pea->sensorsSize = pea->cantSensores;
-    pea->sensorsVec = realloc(pea->sensorsVec, sizeof(pea->sensorsVec[0]) * pea->sensorsSize+1);
-}
-
 static int compareMax (const void * a, const void * b) {
     TSensor *r1 = (TSensor *) a;
     TSensor *r2 = (TSensor *) b;
@@ -275,3 +255,23 @@ static int compareTotal (const void * a, const void * b) {
     }
     return -1;
 }
+
+void sortMax(peatonesADT pea){
+    qsort(pea->sensorsVec, pea->sensorsSize, sizeof(pea->sensorsVec[0]), compareMax);
+}
+
+void sortTotal(peatonesADT pea){
+    qsort(pea->sensorsVec, pea->sensorsSize, sizeof(pea->sensorsVec[0]), compareTotal);
+}
+
+void deleteGaps(peatonesADT pea){
+    int i, j;
+    for( i=0, j=0; j < pea->amountSensors && i < pea->sensorsSize; i++){
+        if(pea->sensorsVec[i].id != E_NOT_FOUND){
+            pea->sensorsVec[j++] = pea->sensorsVec[i];
+        }
+    }
+    pea->sensorsSize = pea->amountSensors;
+    pea->sensorsVec = realloc(pea->sensorsVec, sizeof(pea->sensorsVec[0]) * pea->sensorsSize+1);
+}
+
