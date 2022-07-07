@@ -11,8 +11,8 @@ debug: COMPILER+=$(DEBUG_COMPILER)
 debug: all
 main.o: main.c
 	$(COMPILER) -c main.c $(FLAGS)
-PeatonesADT.o: PeatonesADT.c PeatonesADT.h
-	$(COMPILER) -c PeatonesADT.c PeatonesADT.h $(FLAGS)
+PeatonesADT.o: PeatonesADT.c
+	$(COMPILER) -c PeatonesADT.c $(FLAGS)
 cleanAll: cleanQueries cleanObjects cleanExecutable
 cleanQueries:
 	rm -rf $(QUERIES)
