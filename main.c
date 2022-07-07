@@ -79,6 +79,7 @@ int main(int argc, char * argv[]){
             }
             if(yearRange[1] != 0 && yearRange[TO] < yearRange[FROM])
                 validArg = FALSE;
+            break;
         default:
             errorExit(EINVAL, "Cantidad invalida de argumentos", argv[FILENAME]);
             break;
@@ -159,6 +160,11 @@ int main(int argc, char * argv[]){
 
 int fillAdt(peatonesADT tad, FILE* dataSensors, FILE* dataReadings, int * yearRange){
 
+    char * readingsFormat = "Year;Month;Mdate;Day;Sensor_ID;Time;Hourly_Counts";
+    int R_F_length = (int)strlen(readingsFormat);
+    char * sensorsFormat = "Sensor_ID;Name;Status";
+    int S_F_length = (int)strlen(sensorsFormat);
+
     //  VARIABLES QUE LLENAMOS CON DATA_SENSORS
     int id;
     char buff[BUFF_SIZE], * token, * name; // en buff se van a ir llegando las lineas del .csv. BUFF_SIZE es un tamaño arbitrario
@@ -167,6 +173,29 @@ int fillAdt(peatonesADT tad, FILE* dataSensors, FILE* dataReadings, int * yearRa
     if (fgets(buff, BUFF_SIZE, dataSensors) == NULL) {
         return E_FILE;
     }
+
+    // si la primera linea no es la que corresponde, se fija si los archivos fueron enviados en orden inverso
+    // (primero sensors, segundo readings). si es asi los intercambia y continua. de lo contrario si los archivos no son los correctos
+    // retorna un mensaje de error y aborta
+    if (strncmp(sensorsFormat, buff, S_F_length)!=0) {
+        if (strncmp(readingsFormat, buff, R_F_length) != 0) {
+            return E_FILE;
+        }
+        //si dataSensors es en realidad el archivo de readings
+        //se fija que la primera linea de dataReadings no este vacia. si es asi retorna error.
+        if (fgets(buff, BUFF_SIZE, dataReadings) == NULL) {
+            return E_FILE;
+        }
+        //si ambos eran correctos pero estaban en el lugar equivocado intercambia los archivos
+        if (strncmp(sensorsFormat, buff, S_F_length) == 0) {
+            FILE *aux = dataReadings;
+            dataReadings = dataSensors;
+            dataSensors = aux;
+        } else return E_FILE; //
+    }
+    else if (strncmp(readingsFormat, buff, R_F_length) != 0) return E_FILE;
+    //si llego hasta aca ambos archivos eran correctos. O estaban ya en la variable correcta, o fueron intercambiados para que lo esten
+
 
     while (fgets(buff, BUFF_SIZE, dataSensors) != NULL) { //leo las lineas del archivo hasta el final, guardo la linea en buff hasta BUFF_SIZE caracteres.
 
@@ -191,9 +220,6 @@ int fillAdt(peatonesADT tad, FILE* dataSensors, FILE* dataReadings, int * yearRa
     char * Wday;
     int sensorId, counts, status;
     int dateFormatted[DATE_FIELDS];
-    if (fgets(buff, BUFF_SIZE, dataReadings) == NULL) {
-        return E_FILE;
-    }
 
     while (fgets(buff, BUFF_SIZE, dataReadings) != NULL) { //leo las lineas del archivo hasta el final, guardo la linea en buff hasta BUFF_SIZE caracteres.
 
