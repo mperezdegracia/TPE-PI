@@ -1,10 +1,9 @@
 /.idea/
 /cmake-build-debug/
-
 /Data/
 # Prerequisites
 *.d
-pedestrians
+
 # Object files
 *.o
 *.ko

@@ -76,6 +76,7 @@ typedef enum daysType { MONDAY=0, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY
 #define EDAY (-4)
 #define EID (-3)
 #define EFILE (-2)
+#define IGNORE (-6)
 //typedef enum monthType {JAN = 0, FEB, MAR, APR, MAY, JUN, JUL, AUG, SEP, OCT, NOV, DEC, CANT_MONTH} monthType;
 /* peatonesADT newPeatones()
  * Crea y devuelve un TAD vacío
