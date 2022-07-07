@@ -31,7 +31,7 @@ typedef struct NodeYear{
 typedef TNodeYear * TYearList;
 
 typedef struct peatonesCDT {
-    size_t cantSensores;   // cantidad de sensores activos que hay en el vector
+    size_t amountSensors;   // cantidad de sensores activos que hay en el vector
     TSensor * sensorsVec;  // vector dinámico de estructuras TSensor, cada sensor (con cierto Id) esta en el indice [sensor Id-1]
     size_t sensorsSize;   // dimension del vector de sensores
 
@@ -93,7 +93,7 @@ int putSensor(peatonesADT pea, int id, char * name){
     if(errno == ENOMEM) return ENOMEM;
     sensor.id = id;
     strcpy(sensor.name, name);
-    pea->cantSensores++;
+    pea->amountSensors++;
     pea->sensorsVec[id-1]=sensor;
     return OK;
 }
@@ -188,8 +188,8 @@ long int getDailyCount(peatonesADT pea, int day, char option){
     return pea->dayVec[(int)day].daylightCount;
 }
 
-size_t getCantSensors(peatonesADT pea){
-    return pea->cantSensores;
+int getSensorsAmount(peatonesADT pea){
+    return pea->amountSensors;
 }
 
 long int getSensorCount(peatonesADT pea, int id){
@@ -267,7 +267,7 @@ static int compareMax (const void * a, const void * b) {
 static int compareTotal (const void * a, const void * b) {
     TSensor *r1 = (TSensor *) a;
     TSensor *r2 = (TSensor *) b;
-    if (r1->sensorCounts == r2->sensorCounts) {
+    if( r1->sensorCounts == r2->sensorCounts){
         return strcmp(r1->name, r2->name);
     }
     if(r2->sensorCounts > r1->sensorCounts) {

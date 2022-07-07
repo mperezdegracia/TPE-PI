@@ -40,13 +40,13 @@ int putSensor(peatonesADT pea, int id, char * name);
 /*
  * Carga los datos de una medicion, siempre y cuando la misma este dentro del rango de años requerido por el usuario.
  * De ser asi, se incrementan los counts de cada categoria y el maxCount del respectivo sensor de ser una medicion maxima hasta el momento.
- * date[DATE_FIELDS]:   Vector con los datos referidos a la fecha de la medicion, con el formato: date[DATE_FIELDS]= {DAY, MONTH, YEAR, HOUR}
- * day:                 String Null Terminated con el nombre del día de la semana obtenido de la medicion.
- * counts:              Cantidad de peatones registrados en la medicion.
- * FromT:               Vector con el rango de años a consultar, segun los parametros pasados por linea de comandos por el usuario.
- *                      En la posicion 0, se encuentra el anio de inicio (From) y en la posicion 1 el anio final (To).
- *                      Si no se especifico alguno de los datos del vector, se deja el valor 0 en la posición correspondiente.
- *
+ * date[DATE_FIELDS]: Vector con los datos referidos a la fecha de la medicion, con el formato: date[DATE_FIELDS]= {DAY, MONTH, YEAR, HOUR}
+ * day:               String Null Terminated con el nombre del día de la semana obtenido de la medicion.
+ * counts:            Cantidad de peatones registrados en la medicion.
+ * FromTo:            Vector con el rango de años a consultar, segun los parametros pasados por linea de comandos por el usuario.
+ *                    En la posicion 0, se encuentra el anio de inicio (From) y en la posicion 1 el anio final (To).
+ *                    Si no se especifico alguno de los datos del vector, se deja el valor 0 en la posición correspondiente.
+ *                    Si el rango de anios no era valido, FromTo[0]=-1 y no se considera ningun anio como valido.
  */
 int addReading(peatonesADT pea, int id, const int date[DATE_FIELDS], const char * day, int counts, const int FromTo[2]);
 
@@ -94,7 +94,7 @@ long int getCount(peatonesADT pea);
 /*
  * Devuelve la cantidad de sensores activos.
  */
-size_t getCantSensors(peatonesADT pea);
+int getSensorsAmount(peatonesADT pea);
 
 /*
  *  Devuelve la cantidad de peatones en horario diurno/nocturno segun el dia y horario especificados.

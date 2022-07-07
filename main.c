@@ -16,17 +16,9 @@
 #define DELIM_FIELD ";"
 
 enum {FROM=0, TO, FROM_TO};
-enum {FILENAME, FILE1, FILE2, RANGE1, RANGE2, MAXARGS};
-//  Imprime un mensaje de error y aborta el programa
-void errorExit (int errValue, char * errMessage, char * arg);
+enum {FILENAME=0, FILE1, FILE2, RANGE1, RANGE2};
 
 int fillAdt(peatonesADT tad, FILE* dataSensors, FILE* dataReadings, int * yearRange);
-
-//  Imprime un mensaje de error y cierra todos los archivos y aborta el programa
-
-typedef enum readingFieldType {R_YEAR = 0, R_MONTH, MDATE, R_DAY, ID, TIME, COUNTS , CANT_FIELDS_READING} readingFieldType;
-
-typedef enum sensorFieldType {SENSOR_ID = 0, NAME, STATUS, CANT_FIELDS_SENSOR} sensorFieldType;
 
 //  Imprime un mensaje de error y aborta el programa
 void errorExit (int errValue, char * errMessage, char * arg);
@@ -36,6 +28,9 @@ void closeExit (FILE * files[], int errValue, char * errMessage, char * arg, siz
 
 //  Cierra todos los archivos utilizados
 void closeAllFiles (FILE * files[], size_t fileCount);
+
+//Funcion que imprime en cada archivo la primera linea, que indica que es lo que representa cada columna del archivo
+void printQueryTitles(FILE * query1, FILE * query2, FILE * query3, FILE * query4);
 
 // Las funciones loadQuery 1, 2, 3 y 4 cargan sobre el archivo recibido queryX.csv con los resultados de cada consulta
 // Si hubo algun problema en la escritura del archivo devuelven E_FILE
@@ -63,16 +58,28 @@ int main(int argc, char * argv[]){
 
     // Validacion de parametros (EINVAL: argumento invalido)
     int yearRange[FROM_TO]={0, 0};
+    int validArg = TRUE;
     switch (argc) {
         case 3:
             break;
-        case 5:
-            yearRange[TO] = atoi(argv[RANGE2]);
         case 4:
-            yearRange[FROM] = atoi(argv[RANGE1]);
-            if(yearRange[1] != 0 && yearRange[TO] < yearRange[FROM])
-                errorExit(EINVAL, "arg[FROM] > arg[TO]", argv[FILENAME]);
+            if (!stringIsNumber(argv[RANGE1])){
+                validArg = FALSE;
+                yearRange[FROM] = -1;
+            } else {
+                yearRange[FROM] = atoi(argv[RANGE1]);
+            }
             break;
+        case 5:
+            if (!stringIsNumber(argv[RANGE1])||!stringIsNumber(argv[RANGE2])){
+                validArg = FALSE;
+                yearRange[FROM] = -1;
+            } else {
+                yearRange[FROM] = atoi(argv[RANGE1]);
+                yearRange[TO] = atoi(argv[RANGE2]);
+            }
+            if(yearRange[1] != 0 && yearRange[TO] < yearRange[FROM])
+                validArg = FALSE;
         default:
             errorExit(EINVAL, "Cantidad invalida de argumentos", argv[FILENAME]);
             break;
@@ -104,6 +111,7 @@ int main(int argc, char * argv[]){
             errorExit(ENOMEM, "No se pudo abrir uno de los archivos", argv[FILENAME]);
         }
     }
+
     //  NUEVO TAD
     peatonesADT  tad = newPeatones();
 
@@ -122,13 +130,15 @@ int main(int argc, char * argv[]){
     if(status == ENOMEM){
         errorExit(ENOMEM, "ERROR : No hay memoria suficiente en el heap", argv[FILENAME]);
     }
-    // UNA VEZ QUE YA CARGAMOS TODOS LOS DATOS, LIMPIAMOS EL VECTOR
 
     deleteGaps(tad);
 
+    // IMPRIMIMOS EN LOS ARCHIVOS QUERY LA PRIMERA LINEA, QUE INDICA QUE REPRESENTA LA INFORMACION DE ESE ARCHIVO
+    printQueryTitles(query1, query2, query3, query4);
+
     // EJECUTAMOS QUERIES
 
-// CARGA DE DATOS A LOS ARCHIVOS QUERY 1, 2, 3 y 4
+    // CARGA DE DATOS A LOS ARCHIVOS QUERY 1, 2, 3 y 4
     if (loadQuery1 (tad, query1) < 0)
         closeExit(files, E_FILE, "Hubo un error en la carga del query1", argv[0], fileCount, tad);
 
@@ -138,12 +148,16 @@ int main(int argc, char * argv[]){
     if (loadQuery3 (tad, query3) < 0)
         closeExit(files, E_FILE, "Hubo un error en la carga del query3", argv[0], fileCount, tad);
 
-    if (loadQuery4 (tad, query4) < 0)
-        closeExit(files, E_FILE, "Hubo un error en la carga del query4", argv[0], fileCount, tad);
+    if (!validArg){
+        closeExit(files, EINVAL, "los parametros del rango de años son incorrectos", argv[0], fileCount, tad);
+    } else if (loadQuery4 (tad, query4) < 0) {
+        closeExit(files, EFILE, "Hubo un error en la carga del query4", argv[0], fileCount, tad);
+    }
 
     closeAllFiles(files, fileCount);
     freePeatones(tad);
 }
+//**********************************************************************************************************************
 
 int fillAdt(peatonesADT tad, FILE* dataSensors, FILE* dataReadings, int * yearRange){
 
@@ -173,9 +187,9 @@ int fillAdt(peatonesADT tad, FILE* dataSensors, FILE* dataReadings, int * yearRa
         }
     }
 
-// *************************************************************** DATA READINGS ************************************************************************************
+    //**********DATA READINGS**********
 
-//  VARIABLES QUE LLENAMOS CON DATA_READINGS
+    // VARIABLES QUE LLENAMOS CON DATA_READINGS
     char * Wday;
     int sensorId, counts, status;
     int dateFormatted[DATE_FIELDS];
@@ -203,7 +217,7 @@ int fillAdt(peatonesADT tad, FILE* dataSensors, FILE* dataReadings, int * yearRa
         counts = atoi(token);
         token = update(token); //token vale NULL
 
-        if (sensorExists(tad, sensorId)) {     // se ignoran los sensores repetidos y desactivados
+        if (sensorExists(tad, sensorId)) {     // solo se agrega la informacion si el sensor existe y es valido
             status = addReading(tad, sensorId, dateFormatted, Wday, counts, yearRange); // creo los sensores
             if(status == ENOMEM){
                 return ENOMEM;
@@ -213,11 +227,19 @@ int fillAdt(peatonesADT tad, FILE* dataSensors, FILE* dataReadings, int * yearRa
     return OK;
 }
 
+void printQueryTitles(FILE * query1, FILE * query2, FILE * query3, FILE * query4){
+    fprintf(query1, "sensor;counts\n");
+    fprintf(query2, "year;counts\n");
+    fprintf(query3, "day;day_counts;night_counts;total_counts\n");
+    fprintf(query4, "sensor;max_counts;hour;date\n");
+}
+
+
 int loadQuery1 (peatonesADT tad, FILE * query1){
     sortTotal(tad);
     long int count;
     char * name;
-    for (int i=1; i <= getCantSensores(tad); i++) {
+    for (int i=1; i <= getSensorsAmount(tad); i++) {
         count = getSensorCount(tad, i);
         name = getNameById(tad, i);
         if (name == NULL || count == E_ID) {
@@ -229,8 +251,7 @@ int loadQuery1 (peatonesADT tad, FILE * query1){
     }
     return OK;
 }
-//función que escribe sobre el archivo query2.csv con los resultados de la consulta
-//devuelve 1 si no hubo problemas en la escritura del archivo o 0 si hubo un error
+
 int loadQuery2 (peatonesADT tad, FILE * query2){
     toBeginYear(tad);
     int year;
@@ -238,7 +259,7 @@ int loadQuery2 (peatonesADT tad, FILE * query2){
     while (hasNextYear(tad)){
         year = getYear(tad);
         counts = getCount(tad);
-        int res = fprintf(query2, "%d;%li\n", year, counts);;
+        int res = fprintf(query2, "%d;%li\n", year, counts);
         if (res < 0){
             return E_FILE;
         }
@@ -267,7 +288,7 @@ int loadQuery4 (peatonesADT tad, FILE * query4){
     int count;
     char* name;
     int dateFormatted[DATE_FIELDS];
-    for (int i=1; i <= getCantSensores(tad); i++){
+    for (int i=1; i <= getSensorsAmount(tad); i++){
         count = getMaxCount(tad, i);
         if(count == 0) return IGNORE;
         name = getNameById(tad, i);
