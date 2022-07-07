@@ -218,11 +218,6 @@ long int getCount(peatonesADT pea){
     return pea->next->yearCount;
 }
 
-int hasMaxReading(peatonesADT pea, int id){
-    if(!sensorExists(pea, id)) return E_ID;
-    return pea->sensorsVec[id-1].maxCount.counts!=0;
-}
-
 int getDate(peatonesADT pea, int id, int date[DATE_FIELDS]){
     if(!sensorExists(pea, id)) return E_ID; // chequeo si existe el sensor o si no hay una medida máxima
     for (int field = 0; field < DATE_FIELDS ; field++) {

@@ -11,7 +11,6 @@ typedef enum dateType { DAY=0, MONTH, YEAR, HOUR, DATE_FIELDS } dateType;
 #define E_ID (-3)           //Error por id's de sensores inexistentes o repetidos
 #define E_DAY (-4)          //Error por dias no validos dado daysType
 #define E_NO_NEXT (-5)      //Error por intentar modificar lo apuntado por el iterador hacia un elemento fuera de la lista
-#define IGNORE (-6)
 #define OK 0
 
 #define CANT_MONTH 12

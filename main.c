@@ -14,6 +14,7 @@
 #define DAYLIGHT 0
 #define NIGHT !DAYLIGHT
 #define DELIM_FIELD ";"
+#define UPDATE strtok(NULL, DELIM_FIELD) // macro para pasar al siguiente token
 
 enum {FROM=0, TO, FROM_TO};
 enum {FILENAME=0, FILE1, FILE2, RANGE1, RANGE2};
@@ -51,8 +52,6 @@ int monthToNum (char * month);
 //  Funcion auxiliar que devuelve el día de la semana en string de acuerdo a su numeración
 char * numToDay (int num);
 
-// Funcion auxiliar que pasa al siguiente token
-char * update (const char * token);
 
 int main(int argc, char * argv[]){
 
@@ -176,9 +175,9 @@ int fillAdt(peatonesADT tad, FILE* dataSensors, FILE* dataReadings, int * yearRa
         // una vez que se termine la linea, token queda en NULL
         id = atoi(token);
         if(!sensorExists(tad, id)) { // si el id no es duplicado
-            token = update(token);
+            token = UPDATE;
             name = token;
-            token = update(token);
+            token = UPDATE;
             if (token[0] == 'A'){
 
                 putSensor(tad, id, name); // creo los sensores
@@ -202,19 +201,19 @@ int fillAdt(peatonesADT tad, FILE* dataSensors, FILE* dataReadings, int * yearRa
         // despues de la llamada inicial, strtok debe llevar NULL como primer argumento
         // una vez que se termine la linea, token queda en NULL
         dateFormatted[YEAR] = atoi(token);
-        token = update(token);
+        token = UPDATE;
         dateFormatted[MONTH] = monthToNum(token);
-        token = update(token);
+        token = UPDATE;
         dateFormatted[DAY] = atoi(token);
-        token = update(token);
+        token = UPDATE;
         Wday = token;
-        token = update(token);
+        token = UPDATE;
         sensorId = atoi(token);
-        token = update(token);
+        token = UPDATE;
         dateFormatted[HOUR] = atoi(token);
-        token = update(token);
+        token = UPDATE;
         counts = atoi(token);
-        token = update(token); //token vale NULL
+        token = UPDATE; //token vale NULL
 
         if (sensorExists(tad, sensorId)) {     // solo se agrega la informacion si el sensor existe y es valido
             status = addReading(tad, sensorId, dateFormatted, Wday, counts, yearRange); // creo los sensores
@@ -308,10 +307,6 @@ int stringIsNumber (const char * num){
         num++;
     }
     return 1;
-}
-
-char * update (const char * token){
-    return strtok(NULL, DELIM_FIELD);
 }
 
 int monthToNum (char * month){
