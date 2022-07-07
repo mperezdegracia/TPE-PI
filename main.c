@@ -8,10 +8,10 @@
 
 #define CANT_QUERYS 4
 #define BUFF_SIZE 512
-#define FALSE 0
+#define DAYLIGHT 0
 #define FROM_TO 2
 
-#define TRUE !FALSE
+#define NIGHT !DAYLIGHT
 #define DELIM_FIELD ";"
 
 
@@ -97,7 +97,7 @@ int main (int argc, char * argv[]) {
 // *************************************************************** DATA SENSORS ************************************************************************************
 
 //  VARIABLES QUE LLENAMOS CON DATA_SENSORS
-    int id, flag;
+    int id;
     char * name;
     char buff[BUFF_SIZE], * token; // en buff se van a ir llegando las lineas del .csv. BUFF_SIZE es un tamaño arbitrario
 
@@ -218,8 +218,8 @@ int loadQuery2 (peatonesADT tad, FILE * query2){
 int loadQuery3 (peatonesADT tad, FILE * query3){
     long int nightCount, dayCount;
     for (int day = MONDAY; day<CANT_DAYS; day++){
-        nightCount = getDailyCount(tad, day, TRUE);
-        dayCount = getDailyCount(tad, day, FALSE);
+        nightCount = getDailyCount(tad, day, DAYLIGHT);
+        dayCount = getDailyCount(tad, day, NIGHT);
         if ( nightCount < 0 || dayCount < 0){
             return EDAY;
         }

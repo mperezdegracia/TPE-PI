@@ -143,10 +143,10 @@ static int weekDayToNum (const char *day){
     return -1;
 }
 
-int addReading(peatonesADT pea, int sensorId, const int date[DATE_FIELDS], const char * day, int counts, const int FromTo[2]){
-    if (!(sensorExists(pea, sensorId)))return EID;
+int addReading(peatonesADT pea, int id, const int date[DATE_FIELDS], const char * day, int counts, const int FromTo[2]){
+    if (!(sensorExists(pea, id)))return EID;
 
-    TSensor sensor = pea->sensorsVec[sensorId-1];
+    TSensor sensor = pea->sensorsVec[id-1];
     sensor.sensorCounts += counts;
     //si esta entre los anios del rango provisto y counts es mayor que el counts que habia en maxCounts, lo modifica
     if (FromTo[0]==0 || (date[YEAR]>=FromTo[0] && ((date[YEAR]<=FromTo[1]) || FromTo[1]==0))){
@@ -157,7 +157,7 @@ int addReading(peatonesADT pea, int sensorId, const int date[DATE_FIELDS], const
             }
         }
     }
-    pea->sensorsVec[sensorId-1] = sensor; //paso al ADT lo que modifique
+    pea->sensorsVec[id-1] = sensor; //paso al ADT lo que modifique
 
     int status = addYear(pea, date[YEAR], counts);
     if(status != OK){
@@ -173,9 +173,9 @@ int addReading(peatonesADT pea, int sensorId, const int date[DATE_FIELDS], const
     return OK;
 }
 
-char * getNameById(peatonesADT pea, int sensorID){
-    if(  !sensorExists(pea, sensorID) ) return NULL;
-    return pea->sensorsVec[sensorID-1].name;
+char * getNameById(peatonesADT pea, int id){
+    if(  !sensorExists(pea, id) ) return NULL;
+    return pea->sensorsVec[id-1].name;
 }
 
 long int getDailyCount(peatonesADT pea, int day, char option){
@@ -191,9 +191,9 @@ int getCantSensores(peatonesADT pea){
     return pea->cantSensores;
 }
 
-long int getSensorCount(peatonesADT pea, int sensorID){
-    if(!sensorExists(pea, sensorID)) return EID;
-    return pea->sensorsVec[sensorID-1].sensorCounts;
+long int getSensorCount(peatonesADT pea, int id){
+    if(!sensorExists(pea, id)) return EID;
+    return pea->sensorsVec[id-1].sensorCounts;
 }
 
 int hasNextYear(peatonesADT pea){
@@ -254,7 +254,7 @@ void eliminaCeros(peatonesADT pea){
     pea->sensorsVec = realloc(pea->sensorsVec, sizeof(pea->sensorsVec[0]) * pea->sensorsSize+1);
 }
 
-int compareMax (const void * a, const void * b) {
+static int compareMax (const void * a, const void * b) {
     TSensor *r1 = (TSensor *) a;
     TSensor *r2 = (TSensor *) b;
     if( r2->maxCount.counts == r1->maxCount.counts){
@@ -263,7 +263,7 @@ int compareMax (const void * a, const void * b) {
     return r2->maxCount.counts - r1->maxCount.counts;
 }
 
-int compareTotal (const void * a, const void * b) {
+static int compareTotal (const void * a, const void * b) {
     TSensor *r1 = (TSensor *) a;
     TSensor *r2 = (TSensor *) b;
     if( r1->sensorCounts == r2->sensorCounts){

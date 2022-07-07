@@ -1,172 +1,126 @@
-//
-// Created by MateoPérezdeGracia on 6/29/2022.
-//
-/*Query 1: Total de Peatones por Sensor
-
-Donde cada línea de la salida contenga, separados por “;” el nombre del sensor y la cantidad total de peatones registrados por el sensor.
-La información debe listarse ordenada en forma descendente por cantidad total de peatones y a igualdad de peatones desempatar alfabéticamente por nombre de sensor.
-
-sensor;counts
-Town Hall (West);185243492
-Flinders Street Station Underpass;163910450
-Bourke Street Mall (South);109987361
-Melbourne Central;109987361
-Princes Bridge;91140173
-...
-
- *
- */
-/*Query 2: Total de Peatones por Año
-
-Donde cada línea de la salida contenga, separados por “;” el año y la cantidad total de peatones registrados por los sensores activos en ese año.
-La información debe listarse ordenada en forma descendente por año.
-
-year;counts
-2022;73286121
-2021;113913422
-2020;96846536
-2019;210333736
-2018;199956553
-...
-
-*/
-/*Query 3: Total de peatones por día de la semana y por período del día
-
-Donde cada línea de la salida contenga, separados por “;” el día de la semana, la cantidad total de peatones registrados por los sensores activos
- durante un rango diurno (entre las 6 horas inclusive y las 18 horas no inclusive), la cantidad total de peatones registrados por los sensores activos durante un
- rango nocturno (entre las 0 horas inclusive hasta las 6 horas y entre las 18 horas inclusive hasta las 0 horas) y la suma de ambos valores.
-La información debe listarse ordenada en forma cronológica por día de la semana donde el Lunes es el primer día de la semana.
-
-day;day_counts;night_counts;total_counts
-Monday;182500261;54267406;236767767
-Tuesday;189118525;58010097;247128622
-Wednesday;193753100;63417800;257170900
-Thursday;194964083;68210933;263175016
-Friday;99229378;2369605;101598983
-Saturday;156200000;90053472;246253472
-Sunday;144543185;63016000;207559185
-
-*/
-/*Query 4: La medición máxima de cada sensor
-
-Donde cada línea de la salida contenga, separados por “;” el nombre del sensor, la cantidad total de peatones registrados en la medición máxima histórica del sensor,
- la hora de esa medición y el día, mes y año de esa medición en formato DD/MM/YYYY.
-La información debe listarse ordenada en forma descendente por cantidad total de peat a igualdad de peatones desempatar alfabéticamente por nombre de sensor.
-ones registrados en la medición máxima histórica y
-
-sensor;max_counts;hour;date
-Bourke St Bridge;14121;23;14/11/2019
-Birrarung Marr;13291;22;24/8/2019
-Southbank;7483;22;30/12/2019
-St Kilda Rd-Alexandra Gardens;7483;20;12/3/2022
-New Quay;6948;10;1/4/2012
-...
-
-*/
-
 #ifndef TPE_PEATONESADT_H
 #define TPE_PEATONESADT_H
 
 typedef struct peatonesCDT* peatonesADT;
 typedef enum dateType { DAY=0, MONTH, YEAR, HOUR, DATE_FIELDS } dateType;
 typedef enum daysType { MONDAY=0, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY, CANT_DAYS } daysType;
+typedef enum errorType { E_FILE = 2, E_ID, E_DAY, E_NO_NEXT } errorType;
 #define CANT_MONTH 12
 #define OK 0
-#define ENONEXT (-5)
-#define EDAY (-4)
-#define EID (-3)
-#define EFILE (-2)
-//typedef enum monthType {JAN = 0, FEB, MAR, APR, MAY, JUN, JUL, AUG, SEP, OCT, NOV, DEC, CANT_MONTH} monthType;
-/* peatonesADT newPeatones()
- * Crea y devuelve un TAD vacío
+
+
+/*
+ * Crea y devuelve un puntero a TAD vacío.
+ * No recibe parámetros.
  */
 peatonesADT newPeatones(void);
 
-/*void freePeatones(
- * Libera el TAD
+/*
+ * Libera la memoria reservada para el TAD.
+ * peat:    puntero al TAD.
  */
 void freePeatones(peatonesADT peat);
 
-/* int putSensor()
- * Agrega un sensor y devuelve un 1 si lo creó y un 0 si ya existe.
+/*
+ * Agrega un sensor al vector del TAD, utilizando el ID para ubicarlo en el mismo y almacenando su nombre.
+ * Devuelve OK si lo creó y E_ID si ya existe (no se modifica el vector).
+ * id:      identificador del sensor.
+ * name:    string null terminated con el nombre del sensor.
  */
 int putSensor(peatonesADT pea, int id, char * name);
 
-/* int addReading()
- * incrementa los respectivos counts, si la medición es máxima, entonces actualizo el maxCount del respectivo sensor
+/*
+ * Carga los datos de una medicion, siempre y cuando la misma este dentro del rango de años requerido por el usuario.
+ * De ser asi, se incrementan los counts de cada categoria y el maxCount del respectivo sensor de ser una medicion maxima hasta el momento.
+ * date[DATE_FIELDS]:   Vector con los datos referidos a la fecha de la medicion, con el formato: date[DATE_FIELDS]= {DAY, MONTH, YEAR, HOUR}
+ * day:                 String Null Terminated con el nombre del día de la semana obtenido de la medicion.
+ * counts:              Cantidad de peatones registrados en la medicion.
+ * FromT:               Vector con el rango de años a consultar, segun los parametros pasados por linea de comandos por el usuario.
+ *                      En la posicion 0, se encuentra el anio de inicio (From) y en la posicion 1 el anio final (To).
+ *                      Si no se especifico alguno de los datos del vector, se deja el valor 0 en la posición correspondiente.
+ *
  */
-int addReading(peatonesADT pea, int sensorId, const int date[DATE_FIELDS], const char * day, int counts, const int FromTo[2]);   // puse add xq uso listas
+int addReading(peatonesADT pea, int id, const int date[DATE_FIELDS], const char * day, int counts, const int FromTo[2]);
 
-/* int sensorExists()
- * Devuelve 1 si el sensor está en la lista de sensores activos y 0 de lo contrario
+/*
+ * Devuelve 1 si el sensor está en la lista de sensores activos y 0 en caso contrario.
  */
 int sensorExists(peatonesADT pea, int id);
 
-/* long int getSensorCount()
- * Devuelve la cantidad de peatones que leyó un sensor
+/*
+ * Devuelve la cantidad de peatones que registró un sensor en función de su id.
  */
-long int getSensorCount(peatonesADT pea, int sensorID);
-
-/* char* getNameById()
- * Devuelve el nombre del sensor
- */
-char* getNameById(peatonesADT pea, int sensorID);
-
-/* int * getSensorIDs()
- * Devuelve un vector con los ID de los sensores activos y la dimension de ese vector en un parametro de salida
- * los IDs despues necesitan para pasarle el parametro a getSensorCount
- */
-int  getSensorIDs(peatonesADT pea, int sensorIds[]);
-
-/* void toBeginYear()
- * devuelve la cantidad de peatones de un determinado año.
- */
-//long int getYearCount(peatonesADT pea, int year);
+long int getSensorCount(peatonesADT pea, int id);
 
 /*
- * setea el iterador en el primer año de la lista
+ * Devuelve el nombre del sensor en función de su id.
+ */
+char * getNameById(peatonesADT pea, int id);
+
+/*
+ * Setea el iterador en el primer año de la lista.
  */
 void toBeginYear(peatonesADT pea);
 
-/* void nextYear()
- * Obtiene el siguiente año en la lista
+/*
+ * modifica el iterador para que apunte al siguiente año de la lista.
  */
 int nextYear(peatonesADT pea);
 
-/* int hasNextYear()
- * Determina si hay un siguiente año en la lista
- * Devuelve 0 si se llegó al final de la misma y 1 en el caso contrario
+/*
+ * Determina si hay un siguiente año en la lista respecto de la posición apuntada por el iterador.
+ * Devuelve 1 si existe un siguiente y 0 en caso contrario.
  */
 int hasNextYear(peatonesADT pea);
 
+/*
+ * Devuelve el año al que se encuentra apuntando el iterador.
+ */
 int getYear(peatonesADT pea);
 
+/*
+ * Devuelve el total de peatones registrado en el año al que apunta el iterador.
+ */
 long int getCount(peatonesADT pea);
 
-int getCantSensores(peatonesADT pea);
-
-int hasMaxReading(peatonesADT pea, int id);
-
-/* long int getDailyCount()
- *      Devuelve la cantidad de peatones en horario diurno/nocturno del día especificado, se pasa un BOOL donde 0 es para daylight y 1 es para night
+/*
+ * Devuelve la cantidad de sensores activos.
  */
-long int getDailyCount(peatonesADT pea, int day, char night);
+size_t getCantSensors(peatonesADT pea);
 
-/* getMaxReadingById()
- * Devuelve 1 si tuvo éxito o 0 si hubo error. deja los campos en los parámetros de salida de un sensor con SensorId=id
+/*
+ *  Devuelve la cantidad de peatones en horario diurno/nocturno segun el dia y horario especificados.
+ *  day:    valor que representa el día de la semana que se desea consultar.
+ *  option: valor que indica el horario a revisar, donde 0 es para horario diurno (daylight) y 1 es para el nocturno (night).
+ */
+long int getDailyCount(peatonesADT pea, int day, char option);
+
+/*
+ * Completa el vector date con los datos de la medición maxima del sensor de id especificado.
+ * Utiliza el formato: date[DATE_FIELDS]= {DAY, MONTH, YEAR, HOUR}
+ * Devuelve OK si tuvo éxito o EID si no se encontró el sensor entre los activos.
  */
 int getDate(peatonesADT pea, int id, int date[DATE_FIELDS]);
 
+/*
+ * Devuelve la cantidad de peatones de la medición máxima de un sensor especificado por id.
+ */
 int getMaxCount(peatonesADT pea, int id);
 
+/*
+ * Ordena descendentemente el vector de sensores en función de la medición maxima de cada uno.
+ */
 void sortMax(peatonesADT pea);
 
+/*
+ * Ordena descentamente el vector de sensores según la cantidad total de mediciones de cada uno.
+ */
 void sortTotal(peatonesADT pea);
 
+/*
+ * Reduce el vector de sensores de forma tal que las posiciones reservadas para id's que no están activos sean eliminadas
+ * El vector resultante contiene solo sensores activos para su posterior reordenamiento.
+ */
 void eliminaCeros(peatonesADT pea);
 
-int compareMax (const void * a, const void * b);
-
-int compareTotal (const void * a, const void * b);
-//getDateFormatted
 #endif //TPE_PEATONESADT_H
