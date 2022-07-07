@@ -11,6 +11,8 @@
 #define FALSE 0
 #define DATA_FILES 2
 #define TRUE !FALSE
+#define DAYLIGHT 0
+#define NIGHT !DAYLIGHT
 #define DELIM_FIELD ";"
 
 enum {FROM=0, TO, FROM_TO};
@@ -36,7 +38,7 @@ void closeExit (FILE * files[], int errValue, char * errMessage, char * arg, siz
 void closeAllFiles (FILE * files[], size_t fileCount);
 
 // Las funciones loadQuery 1, 2, 3 y 4 cargan sobre el archivo recibido queryX.csv con los resultados de cada consulta
-// Si hubo algun problema en la escritura del archivo devuelven EFILE, EID o EDAY segun el error corespondiente
+// Si hubo algun problema en la escritura del archivo devuelven E_FILE
 int loadQuery1 (peatonesADT tad, FILE* query1);
 
 int loadQuery2 (peatonesADT tad, FILE* query2);
@@ -48,8 +50,12 @@ int loadQuery4 (peatonesADT tad, FILE* query4);
 //  Recibe un string y devuelve 1 si es un numero y 0 en caso contrario
 int stringIsNumber (const char * num);
 
-// Funcion auxiliar que devuelve el numero del mes
+//  Funcion auxiliar que devuelve el numero del mes
 int monthToNum (char * month);
+
+//  Funcion auxiliar que devuelve el día de la semana en string de acuerdo a su numeración
+char * numToDay (int num);
+
 // Funcion auxiliar que pasa al siguiente token
 char * update (const char * token);
 
@@ -98,7 +104,6 @@ int main(int argc, char * argv[]){
             errorExit(ENOMEM, "No se pudo abrir uno de los archivos", argv[FILENAME]);
         }
     }
-
     //  NUEVO TAD
     peatonesADT  tad = newPeatones();
 
@@ -111,7 +116,7 @@ int main(int argc, char * argv[]){
     // LLENAMOS EL TAD CON LOS DATOS DE LOS DATASETS
     int status = fillAdt(tad, dataSensors, dataReadings, yearRange);
 
-    if(status == EFILE){
+    if(status == E_FILE){
         closeExit(files, EINVAL, "ERROR : durante la carga de datos, el archivo ingresado esta vacio", argv[FILENAME], fileCount, tad);
     }
     if(status == ENOMEM){
@@ -119,22 +124,22 @@ int main(int argc, char * argv[]){
     }
     // UNA VEZ QUE YA CARGAMOS TODOS LOS DATOS, LIMPIAMOS EL VECTOR
 
-    eliminaCeros(tad);
+    deleteGaps(tad);
 
     // EJECUTAMOS QUERIES
 
 // CARGA DE DATOS A LOS ARCHIVOS QUERY 1, 2, 3 y 4
     if (loadQuery1 (tad, query1) < 0)
-        closeExit(files, EFILE, "Hubo un error en la carga del query1", argv[0], fileCount, tad);
+        closeExit(files, E_FILE, "Hubo un error en la carga del query1", argv[0], fileCount, tad);
 
     if (loadQuery2 (tad, query2) < 0)
-        closeExit(files, EFILE, "Hubo un error en la carga del query2", argv[0], fileCount, tad);
+        closeExit(files, E_FILE, "Hubo un error en la carga del query2", argv[0], fileCount, tad);
 
     if (loadQuery3 (tad, query3) < 0)
-        closeExit(files, EFILE, "Hubo un error en la carga del query3", argv[0], fileCount, tad);
+        closeExit(files, E_FILE, "Hubo un error en la carga del query3", argv[0], fileCount, tad);
 
     if (loadQuery4 (tad, query4) < 0)
-        closeExit(files, EFILE, "Hubo un error en la carga del query4", argv[0], fileCount, tad);
+        closeExit(files, E_FILE, "Hubo un error en la carga del query4", argv[0], fileCount, tad);
 
     closeAllFiles(files, fileCount);
     freePeatones(tad);
@@ -148,7 +153,7 @@ int fillAdt(peatonesADT tad, FILE* dataSensors, FILE* dataReadings, int * yearRa
 
     // Si la primer linea del archivo dataSensors esta vacia, retorna un mensaje de error y aborta el programa
     if (fgets(buff, BUFF_SIZE, dataSensors) == NULL) {
-        return EFILE;
+        return E_FILE;
     }
 
     while (fgets(buff, BUFF_SIZE, dataSensors) != NULL) { //leo las lineas del archivo hasta el final, guardo la linea en buff hasta BUFF_SIZE caracteres.
@@ -175,7 +180,7 @@ int fillAdt(peatonesADT tad, FILE* dataSensors, FILE* dataReadings, int * yearRa
     int sensorId, counts, status;
     int dateFormatted[DATE_FIELDS];
     if (fgets(buff, BUFF_SIZE, dataReadings) == NULL) {
-        return EFILE;
+        return E_FILE;
     }
 
     while (fgets(buff, BUFF_SIZE, dataReadings) != NULL) { //leo las lineas del archivo hasta el final, guardo la linea en buff hasta BUFF_SIZE caracteres.
@@ -215,12 +220,12 @@ int loadQuery1 (peatonesADT tad, FILE * query1){
     for (int i=1; i <= getCantSensores(tad); i++) {
         count = getSensorCount(tad, i);
         name = getNameById(tad, i);
-        if (name == NULL || count == EID) {
-            return EID;
+        if (name == NULL || count == E_ID) {
+            return E_ID;
         }
         int res = fprintf(query1, "%s;%li\n", name, count);
         if (res < 0)
-            return EFILE;
+            return E_FILE;
     }
     return OK;
 }
@@ -235,7 +240,7 @@ int loadQuery2 (peatonesADT tad, FILE * query2){
         counts = getCount(tad);
         int res = fprintf(query2, "%d;%li\n", year, counts);;
         if (res < 0){
-            return EFILE;
+            return E_FILE;
         }
         nextYear(tad);
     }
@@ -245,14 +250,14 @@ int loadQuery2 (peatonesADT tad, FILE * query2){
 int loadQuery3 (peatonesADT tad, FILE * query3){
     long int nightCount, dayCount;
     for (int day = MONDAY; day<CANT_DAYS; day++){
-        nightCount = getDailyCount(tad, day, TRUE);
-        dayCount = getDailyCount(tad, day, FALSE);
+        nightCount = getDailyCount(tad, day, NIGHT);
+        dayCount = getDailyCount(tad, day, DAYLIGHT);
         if ( nightCount < 0 || dayCount < 0){
-            return EDAY;
+            return E_DAY;
         }
-        int res = fprintf(query3, "%d;%li;%li;%li\n", day, dayCount, nightCount, dayCount+nightCount);
+        int res = fprintf(query3, "%s;%li;%li;%li\n", numToDay(day), dayCount, nightCount, dayCount+nightCount);
         if (res < 0)
-            return EFILE;
+            return E_FILE;
     }
     return OK;
 }
@@ -269,7 +274,7 @@ int loadQuery4 (peatonesADT tad, FILE * query4){
         getDate(tad, i, dateFormatted);
         int res = fprintf(query4, "%s;%d;%d;%d/%d/%d\n", name, count, dateFormatted[3], dateFormatted[0], dateFormatted[1], dateFormatted[2]);
         if (res < 0)
-            return EFILE;
+            return E_FILE;
     }
     return OK;
 }
@@ -294,7 +299,14 @@ int monthToNum (char * month){
         if (strcmp(month, months[i])==0)
             return i+1;
     }
-    return -1;
+    return E_NOT_FOUND;
+}
+char * numToDay (int num){
+    char * weekDay[CANT_DAYS] {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"};
+    if (num < 0 || num >= CANT_DAYS){
+        return NULL;
+    }
+    return weekDay[num];
 }
 
 void errorExit (int errValue, char * errMessage, char * arg) {

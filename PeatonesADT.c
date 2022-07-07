@@ -1,5 +1,6 @@
 #include "PeatonesADT.h"
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <errno.h>
 
@@ -55,7 +56,7 @@ static void freeRecList(TYearList list){
 //funcion auxiliar que libera el nombre en las estructuras Tsensor del vector
 static void freeName(TSensor * sensors, size_t dim){
     for(int i=0; i<dim; i++){
-        if(sensors[i].id !=-1){
+        if(sensors[i].id != E_NOT_FOUND){
             free(sensors[i].name);
         }
     }
@@ -78,13 +79,13 @@ int putSensor(peatonesADT pea, int id, char * name){
 
         // completa los nuevos que agrego con id=-1 para reconocer que estan "vacios", y count en 0
         for(size_t i = pea->sensorsSize; i < id; i++) {
-            pea->sensorsVec[i].id = -1;
+            pea->sensorsVec[i].id = E_NOT_FOUND;
             pea->sensorsVec[i].sensorCounts=0;
         }
         pea->sensorsSize = id;
     }
-    else if (pea->sensorsVec[id-1].id != -1){   // ya existia ese sensor
-        return EID;
+    else if (pea->sensorsVec[id-1].id != E_NOT_FOUND){   // ya existia ese sensor
+        return E_ID;
     }
     TSensor sensor;
     //maxCount y sensorsCount ya estan en 0
@@ -98,7 +99,7 @@ int putSensor(peatonesADT pea, int id, char * name){
 }
 
 int sensorExists(peatonesADT pea, int id){
-    return (pea->sensorsSize > id-1 && pea->sensorsVec[id-1].id!=-1);
+    return (pea->sensorsSize > id-1 && pea->sensorsVec[id-1].id!= E_NOT_FOUND);
 }
 
 //si todavia no habia mediciones de ese anio, agrega un nodo a la lista y lo completa
@@ -140,11 +141,11 @@ static int weekDayToNum (const char *day){
     for(int i=0; i<CANT_DAYS; i++){
         if(strcmp(day, days[i])==0)return i;
     }
-    return -1;
+    return E_NOT_FOUND;
 }
 
 int addReading(peatonesADT pea, int id, const int date[DATE_FIELDS], const char * day, int counts, const int FromTo[2]){
-    if (!(sensorExists(pea, id)))return EID;
+    if (!(sensorExists(pea, id)))return E_ID;
 
     TSensor sensor = pea->sensorsVec[id-1];
     sensor.sensorCounts += counts;
@@ -180,19 +181,19 @@ char * getNameById(peatonesADT pea, int id){
 
 long int getDailyCount(peatonesADT pea, int day, char option){
     //partiendo de que los parametros day y option son válidos se devuelve el campo que almacena los resultados totales de peatones por día y según el horario
-    if(day < 0 || day > 6) return EDAY;
+    if(day < 0 || day > 6) return E_DAY;
     if (option){
         return pea->dayVec[(int)day].nightCount;
     }
     return pea->dayVec[(int)day].daylightCount;
 }
 
-int getCantSensores(peatonesADT pea){
+size_t getCantSensors(peatonesADT pea){
     return pea->cantSensores;
 }
 
 long int getSensorCount(peatonesADT pea, int id){
-    if(!sensorExists(pea, id)) return EID;
+    if(!sensorExists(pea, id)) return E_ID;
     return pea->sensorsVec[id-1].sensorCounts;
 }
 
@@ -205,7 +206,7 @@ void toBeginYear(peatonesADT pea){
 }
 
 int nextYear(peatonesADT pea){
-    if( !hasNextYear(pea)) return ENONEXT;
+    if( !hasNextYear(pea)) return E_NO_NEXT;
     pea->next =  pea->next->tail;
     return OK;
 }
@@ -219,12 +220,12 @@ long int getCount(peatonesADT pea){
 }
 
 int hasMaxReading(peatonesADT pea, int id){
-    if(!sensorExists(pea, id)) return EID;
+    if(!sensorExists(pea, id)) return E_ID;
     return pea->sensorsVec[id-1].maxCount.counts!=0;
 }
 
 int getDate(peatonesADT pea, int id, int date[DATE_FIELDS]){
-    if(!sensorExists(pea, id)) return EID; // chequeo si existe el sensor o si no hay una medida máxima
+    if(!sensorExists(pea, id)) return E_ID; // chequeo si existe el sensor o si no hay una medida máxima
     for (int field = 0; field < DATE_FIELDS ; field++) {
         date[field] = pea->sensorsVec[id-1].maxCount.dateFormatted[field];
     }
@@ -243,10 +244,10 @@ void sortTotal(peatonesADT pea){
     qsort(pea->sensorsVec, pea->sensorsSize, sizeof(pea->sensorsVec[0]), compareTotal);
 }
 
-void eliminaCeros(peatonesADT pea){
+void deleteGaps(peatonesADT pea){
     int i, j;
     for( i=0, j=0; j < pea->cantSensores && i < pea->sensorsSize; i++){
-        if(pea->sensorsVec[i].id != -1){
+        if(pea->sensorsVec[i].id != E_NOT_FOUND){
             pea->sensorsVec[j++] = pea->sensorsVec[i];
         }
     }
@@ -266,7 +267,7 @@ static int compareMax (const void * a, const void * b) {
 static int compareTotal (const void * a, const void * b) {
     TSensor *r1 = (TSensor *) a;
     TSensor *r2 = (TSensor *) b;
-    if( r1->sensorCounts == r2->sensorCounts){
+    if (r1->sensorCounts == r2->sensorCounts) {
         return strcmp(r1->name, r2->name);
     }
     if(r2->sensorCounts > r1->sensorCounts) {
