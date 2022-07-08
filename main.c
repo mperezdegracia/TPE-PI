@@ -70,7 +70,7 @@ int main(int argc, char * argv[]){
         case 4:
             if (!stringIsNumber(argv[RANGE1])){
                 validArg = FALSE;
-                yearRange[FROM] = -1;
+                yearRange[FROM] = E_NOT_FOUND;
             } else {
                 yearRange[FROM] = atoi(argv[RANGE1]);
             }
@@ -78,12 +78,12 @@ int main(int argc, char * argv[]){
         case 5:
             if (!stringIsNumber(argv[RANGE1])||!stringIsNumber(argv[RANGE2])){
                 validArg = FALSE;
-                yearRange[FROM] = -1;
+                yearRange[FROM] = E_NOT_FOUND;
             } else {
                 yearRange[FROM] = atoi(argv[RANGE1]);
                 yearRange[TO] = atoi(argv[RANGE2]);
             }
-            if(yearRange[1] != 0 && yearRange[TO] < yearRange[FROM])
+            if(yearRange[TO] != 0 && yearRange[TO] < yearRange[FROM])
                 validArg = FALSE;
             break;
         default:
@@ -135,8 +135,6 @@ int main(int argc, char * argv[]){
     if(status == ENOMEM){
         errorExit(ENOMEM, "ERROR : No hay memoria suficiente en el heap", argv[FILENAME]);
     }
-
-    deleteGaps(tad);
 
     // IMPRIMIMOS EN LOS ARCHIVOS QUERY LA PRIMERA LINEA, QUE INDICA QUE REPRESENTA LA INFORMACION DE ESE ARCHIVO
     printQueryTitles(query1, query2, query3, query4);
@@ -265,6 +263,7 @@ int fillAdt(peatonesADT tad, FILE* dataSensors, FILE* dataReadings, int * yearRa
             }
         }
     }
+    deleteGaps(tad);
     return OK;
 }
 
