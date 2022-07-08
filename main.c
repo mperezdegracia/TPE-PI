@@ -19,28 +19,48 @@
 enum {FROM=0, TO, FROM_TO};
 enum {FILENAME=0, FILE1, FILE2, RANGE1, RANGE2};
 
-// completa el adt con los datos de dataSensors y dataReadings
-int fillAdt(peatonesADT tad, FILE* dataSensors, FILE* dataReadings, int * yearRange);
+//  Verifica que los parametros pasados por linea de comando sean validos para iniciar el programa.
+//  Devuelve TRUE si la cantidad de parametros y su formato es valido
+//  Devuelve FALSE si la cantidad de parametros es valida pero hay un problema en cuanto al contenido/formato
+//  Devuelve EINVAL si la cantidad de parametros no es valida
+//argc:         numero de argumentos pasados (incluye el nombre de la función)
+//argv:         vector con los parametros en formato string
+int argAreValid(int argc, char * argv[], int yearRange[FROM_TO]);
 
-// verifica que los archivos sean los correctos, y si son correctos pero fueron pasados en orden inverso (primero
-// sensors y despues readings) intercambia el contenido de las variables dataSensors y dataReadings
-// devuelve 0 si no son validos, y 1 si lo son
+//  verifica que los archivos sean los correctos para extraer los datos.
+//  si lo son pero fueron pasados en orden inverso (primero sensors y despues readings) intercambia el contenido de las variables dataSensors y dataReadings
+//  devuelve TRUE o FALSE para determinar si cumplieron los requerimientos
+//buff:     vector de chars en el que se almacenan los caracteres leidos desde archivos del dataset
+//buffsize: dimension del vector buff
 int filesAreValid (char buff[], int buffSize, FILE ** dataReadings, FILE ** dataSensors);
 
+// carga los datos de dataSensors y dataReadings en el TAD
+//tad:          puntero al tad
+//dataSensors:  puntero a estructura de tipo FILE para trabajar con el archivo de sensors.csv
+//dataReadings: puntero a estructura de tipo FILE para trabajar con el archivo de readings.csv
+//yearRange:    vector con el año de inicio y fin para filtrar los datos
+int fillAdt(peatonesADT tad, FILE* dataSensors, FILE* dataReadings, int * yearRange);
+
 //  Imprime un mensaje de error y aborta el programa
+//errValue:     valor para identificar el error producido
+//errMessage:   mensaje que explica el error
+//arg:          nombre del archivo ejecutable
 void errorExit (int errValue, char * errMessage, char * arg);
 
 //  Imprime un mensaje de error, libera los recursos usados, cierra todos los archivos y aborta el programa
+//files:        vector de punteros a estructuras de tipo FILE para trabajar con los archivos abiertos
+//fileCount:    cantidad total de archivos abiertos
 void closeExit (FILE * files[], int errValue, char * errMessage, char * arg, size_t fileCount, peatonesADT tad);
 
-//  Cierra todos los archivos utilizados
+//  Cierra todos los archivos abiertos sin abortar
 void closeAllFiles (FILE * files[], size_t fileCount);
 
-//Funcion que imprime en cada archivo la primera linea, que indica que es lo que representa cada columna del archivo
+//  Imprime en cada archivo la primera linea, que indica que es lo que representa cada columna del archivo (formato)
+//query1, query2, query3, query4:       punteros a estructuras de tipo FILE para trabajar con los archivos que contienen las consultas realizadas
 void printQueryTitles(FILE * query1, FILE * query2, FILE * query3, FILE * query4);
 
-// Las funciones loadQuery 1, 2, 3 y 4 cargan sobre el archivo recibido queryX.csv con los resultados de cada consulta
-// Si hubo algun problema en la escritura del archivo devuelven E_FILE
+//  Las funciones loadQuery 1, 2, 3 y 4 cargan sobre el archivo recibido queryX.csv con los resultados de cada consulta
+//  Si hubo algun problema en la escritura del archivo devuelven E_FILE y  E_ID o E_DAY por errores en los datos obtenidos del tad para su carga
 int loadQuery1 (peatonesADT tad, FILE* query1);
 
 int loadQuery2 (peatonesADT tad, FILE* query2);
@@ -49,10 +69,10 @@ int loadQuery3 (peatonesADT tad, FILE* query3);
 
 int loadQuery4 (peatonesADT tad, FILE* query4);
 
-//  Recibe un string y devuelve 1 si es un numero y 0 en caso contrario
+//  Recibe un string y devuelve TRUE si es un numero y FALSE en caso contrario
 int stringIsNumber (const char * num);
 
-//  Funcion auxiliar que devuelve el numero del mes
+//  Funcion auxiliar que devuelve el numero del mes, en base a su nombre
 int monthToNum (char * month);
 
 //  Funcion auxiliar que devuelve el día de la semana en string de acuerdo a su numeración
@@ -60,37 +80,12 @@ char * numToDay (int num);
 
 
 int main(int argc, char * argv[]){
-
     // Validacion de parametros (EINVAL: argumento invalido)
-    int yearRange[FROM_TO]={0, 0};
-    int validArg = TRUE;
-    switch (argc) {
-        case 3:
-            break;
-        case 4:
-            if (!stringIsNumber(argv[RANGE1])){
-                validArg = FALSE;
-                yearRange[FROM] = E_NOT_FOUND;
-            } else {
-                yearRange[FROM] = atoi(argv[RANGE1]);
-            }
-            break;
-        case 5:
-            if (!stringIsNumber(argv[RANGE1])||!stringIsNumber(argv[RANGE2])){
-                validArg = FALSE;
-                yearRange[FROM] = E_NOT_FOUND;
-            } else {
-                yearRange[FROM] = atoi(argv[RANGE1]);
-                yearRange[TO] = atoi(argv[RANGE2]);
-            }
-            if(yearRange[TO] != 0 && yearRange[TO] < yearRange[FROM])
-                validArg = FALSE;
-            break;
-        default:
-            errorExit(EINVAL, "Cantidad invalida de argumentos", argv[FILENAME]);
-            break;
+    int yearRange[FROM_TO] = {0,0};
+    int validArg = argAreValid(argc, argv, yearRange);
+    if (validArg == EINVAL) {
+        errorExit(EINVAL, "Cantidad invalida de argumentos", argv[FILENAME]);
     }
-
     // **********DECLARACION DE ARCHIVOS **********
 
     FILE * dataSensors = fopen(argv[FILE2], "r");
@@ -161,6 +156,37 @@ int main(int argc, char * argv[]){
     freePeatones(tad);
 }
 //**********************************************************************************************************************
+
+int argAreValid (int argc, char * argv[], int yearRange[FROM_TO]){
+    int validArg = TRUE;
+    switch (argc) {
+        case 3:
+            break;
+        case 4:
+            if (!stringIsNumber(argv[RANGE1])){
+                validArg = FALSE;
+                yearRange[FROM] = E_NOT_FOUND;
+            } else {
+                yearRange[FROM] = atoi(argv[RANGE1]);
+            }
+            break;
+        case 5:
+            if (!stringIsNumber(argv[RANGE1])||!stringIsNumber(argv[RANGE2])){
+                validArg = FALSE;
+                yearRange[FROM] = E_NOT_FOUND;
+            } else {
+                yearRange[FROM] = atoi(argv[RANGE1]);
+                yearRange[TO] = atoi(argv[RANGE2]);
+            }
+            if(yearRange[TO] != 0 && yearRange[TO] < yearRange[FROM])
+                validArg = FALSE;
+            break;
+        default:
+            validArg = EINVAL;
+            break;
+    }
+    return validArg;
+}
 
 int filesAreValid (char buff[], int buffSize, FILE ** dataReadings, FILE ** dataSensors){
     char * readingsFormat = "Year;Month;Mdate;Day;Sensor_ID;Time;Hourly_Counts";
@@ -313,7 +339,7 @@ int loadQuery3 (peatonesADT tad, FILE * query3){
     for (int day = MONDAY; day<CANT_DAYS; day++){
         nightCount = getDailyCount(tad, day, NIGHT);
         dayCount = getDailyCount(tad, day, DAYLIGHT);
-        if ( nightCount < 0 || dayCount < 0){
+        if ( nightCount < 0 ){  // si getDailyCount devolvio error
             return E_DAY;
         }
         int res = fprintf(query3, "%s;%li;%li;%li\n", numToDay(day), dayCount, nightCount, dayCount+nightCount);
@@ -345,10 +371,10 @@ int loadQuery4 (peatonesADT tad, FILE * query4){
 int stringIsNumber (const char * num){
     while(*num != 0){
         if (!isdigit(*num))
-            return 0;
+            return FALSE;
         num++;
     }
-    return 1;
+    return TRUE;
 }
 
 int monthToNum (char * month){
