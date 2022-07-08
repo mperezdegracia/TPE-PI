@@ -3,6 +3,20 @@
 #include <string.h>
 #include <errno.h>
 
+/*
+ * en la esturctura peatonesCDT:
+ *
+ * es necesario que los anios esten ordenados para que despues sea mas eficiente el query 2, y se desconoce
+ * el anio a partir del cual se comienzan a tomar mediciones, por lo que consideramos que convenia una lista
+ *
+ * la cantidad de dias de semana es un valor fijo, por lo que lo mejor es usar un vector estatico
+ *
+ * para los sensores la eleccion fue mas difícil porque se sabe muy poco acerca de los valores que puede tomar
+ * el id. Decidimos priorizar la eficiencia en la carga de datos utilizando un vector dinamico, para que el acceso
+ * al completar sea de orden 1. Además en los Queries 1 y 4 se pide listar en base a valores que solo se tienen una
+ * vez terminada la carga del dataset, por lo que nos pareció más conveniente ordenar utilizando un vector
+ */
+
 //estructura para guardar la maxima medicion de cada sensor, y el dia, mes, anio y hora en el que se tomo esa medicion
 typedef struct reading {
     int dateFormatted[DATE_FIELDS];  // vector de dim 4 con el dia, mes, anio y hora
@@ -29,18 +43,6 @@ typedef struct NodeYear{
 
 typedef TNodeYear * TYearList;
 
-
-/*
- * es necesario que los anios esten ordenados para que despues sea mas eficiente el query 2, y se desconoce
- * el anio a partir del cual se comienzan a tomar mediciones, por lo que consideramos que convenia una lista
- *
- * la cantidad de dias de semana es un valor fijo, por lo que lo mejor es usar un vector estatico
- *
- * para los sensores la eleccion fue mas difícil porque se sabe muy poco acerca de los valores que puede tomar
- * el id. Decidimos priorizar la eficiencia en la carga de datos utilizando un vector dinamico, para que el acceso
- * al completar sea de orden 1. Además en los Queries 1 y 4 se pide listar en base a valores que solo se tienen una
- * vez terminada la carga del dataset, por lo que nos pareció más conveniente ordenar utilizando un vector
- */
 typedef struct peatonesCDT {
     unsigned int amountSensors;   // cantidad de sensores activos que hay en el vector
     TSensor * sensorsVec;  // vector dinámico de estructuras TSensor, cada sensor (con cierto Id) esta en el indice [sensor Id-1]
@@ -142,7 +144,7 @@ static TYearList addYearRec(TYearList list, int year, int count){
     return list;
 }
 
-int addYear(peatonesADT pea, int year, int count){
+static int addYear(peatonesADT pea, int year, int count){
     pea->first = addYearRec(pea->first, year, count);
     if(errno==ENOMEM){
         return errno;
@@ -210,7 +212,7 @@ long int getDailyCount(peatonesADT pea, int day, char option){
     return pea->dayVec[(int)day].daylightCount;
 }
 
-unsigned long getSensorsAmount(peatonesADT pea){
+unsigned int getSensorsAmount(peatonesADT pea){
     return pea->amountSensors;
 }
 

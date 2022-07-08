@@ -16,6 +16,11 @@
 #define DELIM_FIELD ";"
 #define UPDATE strtok(NULL, DELIM_FIELD) // macro para pasar al siguiente token
 
+#define HEADER1 "sensor;counts"
+#define HEADER2 "year;counts"
+#define HEADER3 "day;day_counts;night_counts;total_counts"
+#define HEADER4 "sensor;max_counts;hour;date"
+
 enum {FROM=0, TO, FROM_TO};
 enum {FILENAME=0, FILE1, FILE2, RANGE1, RANGE2};
 
@@ -80,6 +85,8 @@ char * numToDay (int num);
 
 
 int main(int argc, char * argv[]){
+    errno = 0;
+
     // Validacion de parametros (EINVAL: argumento invalido)
     int yearRange[FROM_TO] = {0,0};
     int validArg = argAreValid(argc, argv, yearRange);
@@ -96,7 +103,6 @@ int main(int argc, char * argv[]){
     FILE * query4 = fopen("query4.csv", "w");
     FILE * files[] = {dataSensors, dataReadings, query1, query2, query3, query4};
     size_t fileCount = CANT_QUERYS + DATA_FILES;
-
 
     // Revisamos que no hubo ningun error al abrir los archivos
     // ENOENT: no existe dicho archivo.
@@ -137,19 +143,19 @@ int main(int argc, char * argv[]){
     // EJECUTAMOS QUERIES
 
     // CARGA DE DATOS A LOS ARCHIVOS QUERY 1, 2, 3 y 4
-    if (loadQuery1 (tad, query1) < 0) {
-        closeExit(files, E_FILE, "Hubo un error en la carga del query1", argv[0], fileCount, tad);
+    if (loadQuery1 (tad, query1) != OK) {
+        closeExit(files, E_FILE, "Hubo un error en la carga del query1", argv[FILENAME], fileCount, tad);
     }
-    if (loadQuery2 (tad, query2) < 0) {
-        closeExit(files, E_FILE, "Hubo un error en la carga del query2", argv[0], fileCount, tad);
+    if (loadQuery2 (tad, query2) != OK) {
+        closeExit(files, E_FILE, "Hubo un error en la carga del query2", argv[FILENAME], fileCount, tad);
     }
-    if (loadQuery3 (tad, query3) < 0) {
-        closeExit(files, E_FILE, "Hubo un error en la carga del query3", argv[0], fileCount, tad);
+    if (loadQuery3 (tad, query3) != OK) {
+        closeExit(files, E_FILE, "Hubo un error en la carga del query3", argv[FILENAME], fileCount, tad);
     }
     if (!validArg){
-        closeExit(files, EINVAL, "los parametros del rango de años son incorrectos", argv[0], fileCount, tad);
-    } else if (loadQuery4 (tad, query4) < 0) {
-        closeExit(files, E_FILE, "Hubo un error en la carga del query4", argv[0], fileCount, tad);
+        closeExit(files, EINVAL, "los parametros del rango de años son incorrectos", argv[FILENAME], fileCount, tad);
+    } else if (loadQuery4 (tad, query4) != OK) {
+        closeExit(files, E_FILE, "Hubo un error en la carga del query4", argv[FILENAME], fileCount, tad);
     }
 
     closeAllFiles(files, fileCount);
@@ -294,10 +300,10 @@ int fillAdt(peatonesADT tad, FILE* dataSensors, FILE* dataReadings, int * yearRa
 }
 
 void printQueryTitles(FILE * query1, FILE * query2, FILE * query3, FILE * query4){
-    fprintf(query1, "sensor;counts\n");
-    fprintf(query2, "year;counts\n");
-    fprintf(query3, "day;day_counts;night_counts;total_counts\n");
-    fprintf(query4, "sensor;max_counts;hour;date\n");
+    fprintf(query1, "%s\n", HEADER1);
+    fprintf(query2, "%s\n", HEADER2);
+    fprintf(query3, "%s\n", HEADER3);
+    fprintf(query4, "%s\n", HEADER4);
 }
 
 
