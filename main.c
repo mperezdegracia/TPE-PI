@@ -19,7 +19,13 @@
 enum {FROM=0, TO, FROM_TO};
 enum {FILENAME=0, FILE1, FILE2, RANGE1, RANGE2};
 
+// completa el adt con los datos de dataSensors y dataReadings
 int fillAdt(peatonesADT tad, FILE* dataSensors, FILE* dataReadings, int * yearRange);
+
+// verifica que los archivos sean los correctos, y si son correctos pero fueron pasados en orden inverso (primero
+// sensors y despues readings) intercambia el contenido de las variables dataSensors y dataReadings
+// devuelve 0 si no son validos, y 1 si lo son
+int filesAreValid (char buff[], int buffSize, FILE ** dataReadings, FILE ** dataSensors);
 
 //  Imprime un mensaje de error y aborta el programa
 void errorExit (int errValue, char * errMessage, char * arg);
@@ -158,20 +164,15 @@ int main(int argc, char * argv[]){
 }
 //**********************************************************************************************************************
 
-int fillAdt(peatonesADT tad, FILE* dataSensors, FILE* dataReadings, int * yearRange){
-
+int filesAreValid (char buff[], int buffSize, FILE ** dataReadings, FILE ** dataSensors){
     char * readingsFormat = "Year;Month;Mdate;Day;Sensor_ID;Time;Hourly_Counts";
     int R_F_length = (int)strlen(readingsFormat);
     char * sensorsFormat = "Sensor_ID;Name;Status";
     int S_F_length = (int)strlen(sensorsFormat);
 
-    //  VARIABLES QUE LLENAMOS CON DATA_SENSORS
-    int id;
-    char buff[BUFF_SIZE], * token, * name; // en buff se van a ir llegando las lineas del .csv. BUFF_SIZE es un tamaño arbitrario
-
     // Si la primer linea del archivo dataSensors esta vacia, retorna un mensaje de error y aborta el programa
-    if (fgets(buff, BUFF_SIZE, dataSensors) == NULL) {
-        return E_FILE;
+    if (fgets(buff, buffSize, *dataSensors) == NULL) {
+        return FALSE;
     }
 
     // si la primera linea no es la que corresponde, se fija si los archivos fueron enviados en orden inverso
@@ -179,27 +180,39 @@ int fillAdt(peatonesADT tad, FILE* dataSensors, FILE* dataReadings, int * yearRa
     // retorna un mensaje de error y aborta
     if (strncmp(sensorsFormat, buff, S_F_length)!=0) {
         if (strncmp(readingsFormat, buff, R_F_length) != 0) {
-            return E_FILE;
+            return FALSE;
         }
         //si dataSensors es en realidad el archivo de readings
         //se fija que la primera linea de dataReadings no este vacia. si es asi retorna error.
-        if (fgets(buff, BUFF_SIZE, dataReadings) == NULL) {
-            return E_FILE;
+        if (fgets(buff, buffSize, *dataReadings) == NULL) {
+            return FALSE;
         }
         //si ambos eran correctos pero estaban en el lugar equivocado intercambia los archivos
         if (strncmp(sensorsFormat, buff, S_F_length) == 0) {
-            FILE *aux = dataReadings;
-            dataReadings = dataSensors;
-            dataSensors = aux;
-        } else return E_FILE; //
-    }
-    else {
-        if (fgets(buff, BUFF_SIZE, dataReadings) == NULL || strncmp(readingsFormat, buff, R_F_length) != 0) {
-            return E_FILE;
+            FILE * aux = *dataReadings;
+            *dataReadings = *dataSensors;
+            *dataSensors = aux;
+            return TRUE;
         }
+        return FALSE;
     }
-    //si llego hasta aca ambos archivos eran correctos. O estaban ya en la variable correcta, o fueron intercambiados para que lo esten
+    if (fgets(buff, buffSize, *dataReadings) == NULL || strncmp(readingsFormat, buff, R_F_length) != 0) {
+        return FALSE;
+    }
+    //si llego hasta aca ambos archivos eran correctos
+    return TRUE;
+}
 
+
+int fillAdt(peatonesADT tad, FILE* dataSensors, FILE* dataReadings, int * yearRange){
+
+    //  VARIABLES QUE LLENAMOS CON DATA_SENSORS
+    int id;
+    char buff[BUFF_SIZE], * token, * name; // en buff se van a ir llegando las lineas del .csv. BUFF_SIZE es un tamaño arbitrario
+
+    if (!filesAreValid(buff, BUFF_SIZE, &dataReadings, &dataSensors)){
+        return E_FILE;
+    }
 
     while (fgets(buff, BUFF_SIZE, dataSensors) != NULL) { //leo las lineas del archivo hasta el final, guardo la linea en buff hasta BUFF_SIZE caracteres.
 
