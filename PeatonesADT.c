@@ -60,7 +60,9 @@ peatonesADT newPeatones(void){
 
 //funcion auxiliar para liberar recursivamente la lista
 static void freeRecList(TYearList list){
-    if(list==NULL) return;
+    if(list==NULL){
+        return;
+    }
     freeRecList(list->tail);
     free(list);
 }
@@ -102,7 +104,9 @@ int putSensor(peatonesADT pea, int id, char * name){
     TSensor sensor;
     //maxCount y sensorsCount ya estan en 0
     sensor.name = malloc(strlen(name) + 1);
-    if(errno == ENOMEM) return ENOMEM;
+    if(errno == ENOMEM) {
+        return ENOMEM;
+    }
     sensor.id = id;
     strcpy(sensor.name, name);
     pea->amountSensors++;
@@ -157,7 +161,9 @@ static int weekDayToNum (const char *day){
 }
 
 int addReading(peatonesADT pea, int id, const int date[DATE_FIELDS], const char * day, int counts, const int FromTo[2]){
-    if (!(sensorExists(pea, id)))return E_ID;
+    if (!(sensorExists(pea, id))){
+        return E_ID;
+    }
 
     TSensor sensor = pea->sensorsVec[id-1];
     sensor.sensorCounts += counts;
@@ -180,20 +186,24 @@ int addReading(peatonesADT pea, int id, const int date[DATE_FIELDS], const char 
     int weekDay = weekDayToNum(day);
     if (date[HOUR] >= 6 && date[HOUR] < 18){
         pea->dayVec[weekDay].daylightCount += counts;
-    } else
+    } else {
         pea->dayVec[weekDay].nightCount += counts;
-
+    }
     return OK;
 }
 
 char * getNameById(peatonesADT pea, int id){
-    if(  !sensorExists(pea, id) ) return NULL;
+    if(!sensorExists(pea, id)){
+        return NULL;
+    }
     return pea->sensorsVec[id-1].name;
 }
 
 long int getDailyCount(peatonesADT pea, int day, char option){
     //partiendo de que los parametros day y option son válidos se devuelve el campo que almacena los resultados totales de peatones por día y según el horario
-    if(day < 0 || day > 6) return E_DAY;
+    if(day < 0 || day > 6) {
+        return E_DAY;
+    }
     if (option){
         return pea->dayVec[(int)day].nightCount;
     }
@@ -205,7 +215,9 @@ unsigned long getSensorsAmount(peatonesADT pea){
 }
 
 long int getSensorCount(peatonesADT pea, int id){
-    if(!sensorExists(pea, id)) return E_ID;
+    if(!sensorExists(pea, id)){
+        return E_ID;
+    }
     return pea->sensorsVec[id-1].sensorCounts;
 }
 
@@ -218,7 +230,9 @@ void toBeginYear(peatonesADT pea){
 }
 
 int nextYear(peatonesADT pea){
-    if( !hasNextYear(pea)) return E_NO_NEXT;
+    if( !hasNextYear(pea)){
+        return E_NO_NEXT;
+    }
     pea->next =  pea->next->tail;
     return OK;
 }
@@ -227,13 +241,15 @@ int getYear(peatonesADT pea){
     return pea->next->year;
 }
 
-long int getCount(peatonesADT pea){
+long int getYearCount(peatonesADT pea){
     return pea->next->yearCount;
 }
 
 int getDate(peatonesADT pea, int id, int date[DATE_FIELDS]){
-    if(!sensorExists(pea, id)) return E_ID; // chequeo si existe el sensor o si no hay una medida máxima
-    for (int field = 0; field < DATE_FIELDS ; field++) {
+    if(!sensorExists(pea, id)){
+        return E_ID; // chequeo si existe el sensor o si no hay una medida máxima
+    }
+    for (int field = DAY; field < DATE_FIELDS ; field++) {
         date[field] = pea->sensorsVec[id-1].maxCount.dateFormatted[field];
     }
     return OK;
@@ -243,6 +259,14 @@ int getMaxCount(peatonesADT pea, int id){
     return pea->sensorsVec[id-1].maxCount.counts;
 }
 
+//Teniendo en cuenta los parametros que toma qsort, utilizado en sortMax y sortTotal
+// las funciones auxiliares para comparar deben tener el siguiente prototipo:
+// int (*comparator)(const void* p1,const void* p2)
+// de modo que su valor de retorno indicará el orden en el que se ubiquen en el vector siendo:
+// <0  si el elemento apuntado por p1 va antes del apuntado por p2
+//  0  si el elemento apuntado por p1 es equivalente al apuntado por p2
+// >0  si el elemento apuntado por p1 va despues del apuntado por p2
+// A continuación las definimos para cada caso pedido:
 static int compareMax (const void * a, const void * b) {
     TSensor *r1 = (TSensor *) a;
     TSensor *r2 = (TSensor *) b;
@@ -258,10 +282,11 @@ static int compareTotal (const void * a, const void * b) {
     if( r1->sensorCounts == r2->sensorCounts){
         return strcmp(r1->name, r2->name);
     }
+    //no se devuelve la resta para evitar errores de casteo de long int a int
     if(r2->sensorCounts > r1->sensorCounts) {
         return 1;
     }
-    return -1;
+    return E_NOT_FOUND;
 }
 
 void sortMax(peatonesADT pea){

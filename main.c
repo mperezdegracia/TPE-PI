@@ -137,15 +137,15 @@ int main(int argc, char * argv[]){
     // EJECUTAMOS QUERIES
 
     // CARGA DE DATOS A LOS ARCHIVOS QUERY 1, 2, 3 y 4
-    if (loadQuery1 (tad, query1) < 0)
+    if (loadQuery1 (tad, query1) < 0) {
         closeExit(files, E_FILE, "Hubo un error en la carga del query1", argv[0], fileCount, tad);
-
-    if (loadQuery2 (tad, query2) < 0)
+    }
+    if (loadQuery2 (tad, query2) < 0) {
         closeExit(files, E_FILE, "Hubo un error en la carga del query2", argv[0], fileCount, tad);
-
-    if (loadQuery3 (tad, query3) < 0)
+    }
+    if (loadQuery3 (tad, query3) < 0) {
         closeExit(files, E_FILE, "Hubo un error en la carga del query3", argv[0], fileCount, tad);
-
+    }
     if (!validArg){
         closeExit(files, EINVAL, "los parametros del rango de años son incorrectos", argv[0], fileCount, tad);
     } else if (loadQuery4 (tad, query4) < 0) {
@@ -312,8 +312,9 @@ int loadQuery1 (peatonesADT tad, FILE * query1){
             return E_ID;
         }
         int res = fprintf(query1, "%s;%li\n", name, count);
-        if (res < 0)
+        if (res < 0) {
             return E_FILE;
+        }
     }
     return OK;
 }
@@ -324,7 +325,7 @@ int loadQuery2 (peatonesADT tad, FILE * query2){
     long int counts;
     while (hasNextYear(tad)){
         year = getYear(tad);
-        counts = getCount(tad);
+        counts = getYearCount(tad);
         int res = fprintf(query2, "%d;%li\n", year, counts);
         if (res < 0){
             return E_FILE;
@@ -343,8 +344,9 @@ int loadQuery3 (peatonesADT tad, FILE * query3){
             return E_DAY;
         }
         int res = fprintf(query3, "%s;%li;%li;%li\n", numToDay(day), dayCount, nightCount, dayCount+nightCount);
-        if (res < 0)
+        if (res < 0) {
             return E_FILE;
+        }
     }
     return OK;
 }
@@ -361,8 +363,9 @@ int loadQuery4 (peatonesADT tad, FILE * query4){
             getDate(tad, i, dateFormatted);
             int res = fprintf(query4, "%s;%d;%d;%d/%d/%d\n", name, count, dateFormatted[3], dateFormatted[0],
                               dateFormatted[1], dateFormatted[2]);
-            if (res < 0)
+            if (res < 0) {
                 return E_FILE;
+            }
         }
     }
     return OK;
@@ -370,8 +373,9 @@ int loadQuery4 (peatonesADT tad, FILE * query4){
 
 int stringIsNumber (const char * num){
     while(*num != 0){
-        if (!isdigit(*num))
+        if (!isdigit(*num)) {
             return FALSE;
+        }
         num++;
     }
     return TRUE;
@@ -381,8 +385,9 @@ int monthToNum (char * month){
     char * months[CANT_MONTH] = {"January", "February", "March","April","May", "June", "July",
                                  "August", "September", "October", "November", "December"};
     for (int i=0; i<CANT_MONTH; i++){
-        if (strcmp(month, months[i])==0)
-            return i+1;
+        if (strcmp(month, months[i])==0) {
+            return i + 1;
+        }
     }
     return E_NOT_FOUND;
 }

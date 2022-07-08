@@ -6,7 +6,7 @@
  * El proposito de este programa es organizar los datos de sensores de peatones. Este recibe informacion acerca de los
  * sensores(el nombre, ID, y estado -activo o removido-), con la cual arma un vector para luego almacenar los datos tomados
  * por cada uno de ellos. Recibe los datos tomdos por sensores de peatones y va almacenando la informacion segun distintos
- * criterios: segun el año en el que se tomo la medicion, segun el sensor que la tomo, o segun el dia de la semana en el
+ * criterios: segun el anio en el que se tomo la medicion, segun el sensor que la tomo, o segun el dia de la semana en el
  * que se tomo, en este ultimo caso dividiendo a su vez si la medicion fue tomada durante el dia o la noche. Tambien
  * guarda por cada sensor cual fue la medicion maxima que tomo y en que fecha. Luego el programa porda devolver informacion
  * acerca de los sensores o mediciones (como el total de peatones que se midieron segun alguno de los criterios mencionados)
@@ -46,22 +46,22 @@ void freePeatones(peatonesADT peat);
 
 /*
  * Agrega un sensor al vector del TAD, utilizando el ID para ubicarlo en el mismo y almacenando su nombre.
- * Devuelve OK si lo creó y E_ID si ya existe (no se modifica el vector).
+ * Devuelve OK si lo creo y E_ID si ya existe (no se modifica el vector).
  * id:      identificador del sensor.
  * name:    string null terminated con el nombre del sensor.
  */
 int putSensor(peatonesADT pea, int id, char * name);
 
 /*
- * Carga los datos de una medicion, siempre y cuando la misma este dentro del rango de años requerido por el usuario.
+ * Carga los datos de una medicion, siempre y cuando la misma este dentro del rango de anios requerido por el usuario.
  * De ser asi, se incrementan los counts de cada categoria y el maxCount del respectivo sensor de ser una medicion maxima hasta el momento.
  * date[DATE_FIELDS]: Vector con los datos referidos a la fecha de la medicion, con el formato: date[DATE_FIELDS]= {DAY, MONTH, YEAR, HOUR}
  * day:               String Null Terminated con el nombre del día de la semana obtenido de la medicion.
  * counts:            Cantidad de peatones registrados en la medicion.
- * FromTo:            Vector con el rango de años a consultar, segun los parametros pasados por linea de comandos por el usuario.
+ * FromTo:            Vector con el rango de anios a consultar, segun los parametros pasados por linea de comandos por el usuario.
  *                    En la posicion 0, se encuentra el anio de inicio (From) y en la posicion 1 el anio final (To).
  *                    Si no se especifico alguno de los datos del vector, se deja el valor 0 en la posición correspondiente.
- *                    Si el rango de anios no era valido, FromTo[0]=-1 y no se considera ningun anio como valido.
+ *                    Si el rango de anios no era valido, FromTo[0]=E_NOT_FOUND y no se considera ningun anio como valido.
  */
 int addReading(peatonesADT pea, int id, const int date[DATE_FIELDS], const char * day, int counts, const int FromTo[2]);
 
@@ -81,30 +81,30 @@ long int getSensorCount(peatonesADT pea, int id);
 char * getNameById(peatonesADT pea, int id);
 
 /*
- * Setea el iterador en el primer año de la lista.
+ * Setea el iterador en el primer anio de la lista.
  */
 void toBeginYear(peatonesADT pea);
 
 /*
- * modifica el iterador para que apunte al siguiente año de la lista.
+ * modifica el iterador para que apunte al siguiente anio de la lista.
  */
 int nextYear(peatonesADT pea);
 
 /*
- * Determina si hay un siguiente año en la lista respecto de la posición apuntada por el iterador.
+ * Determina si hay un siguiente anio en la lista respecto de la posición apuntada por el iterador.
  * Devuelve 1 si existe un siguiente y 0 en caso contrario.
  */
 int hasNextYear(peatonesADT pea);
 
 /*
- * Devuelve el año al que se encuentra apuntando el iterador.
+ * Devuelve el anio al que se encuentra apuntando el iterador.
  */
 int getYear(peatonesADT pea);
 
 /*
- * Devuelve el total de peatones registrado en el año al que apunta el iterador.
+ * Devuelve el total de peatones registrado en el anio al que apunta el iterador.
  */
-long int getCount(peatonesADT pea);
+long int getYearCount(peatonesADT pea);
 
 /*
  * Devuelve la cantidad de sensores activos.
@@ -136,13 +136,13 @@ int getMaxCount(peatonesADT pea, int id);
 void sortMax(peatonesADT pea);
 
 /*
- * Ordena descentamente el vector de sensores según la cantidad total de mediciones de cada uno.
+ * Ordena descendentemente el vector de sensores según la cantidad total de mediciones de cada uno.
  */
 void sortTotal(peatonesADT pea);
 
 /*
  * Reduce el vector de sensores de forma tal que las posiciones reservadas para id's que no están activos sean eliminadas
- * El vector resultante contiene solo sensores activos para su posterior reordenamiento.
+ * El vector resultante contiene solo sensores activos.
  */
 void deleteGaps(peatonesADT pea);
 
