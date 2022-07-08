@@ -29,6 +29,18 @@ typedef struct NodeYear{
 
 typedef TNodeYear * TYearList;
 
+
+/*
+ * es necesario que los anios esten ordenados para que despues sea mas eficiente el query 2, y se desconoce
+ * el anio a partir del cual se comienzan a tomar mediciones, por lo que consideramos que convenia una lista
+ *
+ * la cantidad de dias de semana es un valor fijo, por lo que lo mejor es usar un vector estatico
+ *
+ * para los sensores la eleccion fue mas difícil porque se sabe muy poco acerca de los valores que puede tomar
+ * el id. Decidimos priorizar la eficiencia en la carga de datos utilizando un vector dinamico, para que el acceso
+ * al completar sea de orden 1. Además en los Queries 1 y 4 se pide listar en base a valores que solo se tienen una
+ * vez terminada la carga del dataset, por lo que nos pareció más conveniente ordenar utilizando un vector
+ */
 typedef struct peatonesCDT {
     unsigned int amountSensors;   // cantidad de sensores activos que hay en el vector
     TSensor * sensorsVec;  // vector dinámico de estructuras TSensor, cada sensor (con cierto Id) esta en el indice [sensor Id-1]
@@ -40,6 +52,7 @@ typedef struct peatonesCDT {
     TDay dayVec[CANT_DAYS]; // vector de dim 7 de los dias de la semana, en cada indice se guarda la cantidad total de peatones que midieron,
                             // historialmente, ese dia de la semana, separado en mediciones que fueron de dia y las que fueron de noche
 } peatonesCDT;
+
 
 peatonesADT newPeatones(void){
     return calloc(1, sizeof(peatonesCDT));
