@@ -1,3 +1,17 @@
+/*
+ * Creado por Uriel Angel Arias, Catalina Muller, Mateo Perez de Gracia y Sol Rodriguez
+ *
+ * Julio, 2022
+ *
+ * El proposito de este programa es organizar los datos de sensores de peatones. Este recibe informacion acerca de los
+ * sensores(el nombre, ID, y estado -activo o removido-), con la cual arma un vector para luego almacenar los datos tomados
+ * por cada uno de ellos. Recibe los datos tomdos por sensores de peatones y va almacenando la informacion segun distintos
+ * criterios: segun el año en el que se tomo la medicion, segun el sensor que la tomo, o segun el dia de la semana en el
+ * que se tomo, en este ultimo caso dividiendo a su vez si la medicion fue tomada durante el dia o la noche. Tambien
+ * guarda por cada sensor cual fue la medicion maxima que tomo y en que fecha. Luego el programa porda devolver informacion
+ * acerca de los sensores o mediciones (como el total de peatones que se midieron segun alguno de los criterios mencionados)
+ */
+
 #ifndef TPE_PEATONESADT_H
 #define TPE_PEATONESADT_H
 
