@@ -13,7 +13,7 @@
     - Si se desea que la compilación se realice con el flag -g (debug) se debe correr 'make debug'.
     
 ## EJECUCIÓN
-    - Correr el comando: ./pedestrians 'path del archivo CSV de mediciones' 'path del archivo CSV de sensores' 'año de inicio' 'año de fin'(el rango de años es opcional)                                                       SV de sensores' 'año de inicio' 'año de fin' (el rango de años es opcional)
+    - Correr el comando: ./pedestrians 'path del archivo CSV de mediciones' 'path del archivo CSV de sensores' 'año de inicio' 'año de fin'(el rango de años es opcional)
     - OBSERVACIONES: . El orden en el que se pasen los archivos CSV (primero las mediciones y luego los sensores, o viceversa) es indistinto.
                      . Si se pasa un rango de años debe especificarse siempre en números y después de los paths de los archivos CSV.
     
