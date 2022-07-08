@@ -193,7 +193,11 @@ int fillAdt(peatonesADT tad, FILE* dataSensors, FILE* dataReadings, int * yearRa
             dataSensors = aux;
         } else return E_FILE; //
     }
-    else if (strncmp(readingsFormat, buff, R_F_length) != 0) return E_FILE;
+    else {
+        if (fgets(buff, BUFF_SIZE, dataReadings) == NULL || strncmp(readingsFormat, buff, R_F_length) != 0) {
+            return E_FILE;
+        }
+    }
     //si llego hasta aca ambos archivos eran correctos. O estaban ya en la variable correcta, o fueron intercambiados para que lo esten
 
 
